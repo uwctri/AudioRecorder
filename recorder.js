@@ -1,0 +1,238 @@
+AudioRecorder.functions = {};
+AudioRecorder.isRecording = false;
+AudioRecorder.isSaved = true;
+AudioRecorder.extention = 'webm';
+AudioRecorder.codecs = 'opus';
+AudioRecorder.sendingEmail = 'redcap@ctri.wisc.edu'; //TODO
+
+AudioRecorder.functions.mergeAudioStreams = function(desktopStream, voiceStream) {
+    const context = new AudioContext();
+    const destination = context.createMediaStreamDestination();
+    let hasDesktop = false;
+    let hasVoice = false;
+    if (desktopStream && desktopStream.getAudioTracks().length > 0) {
+        // If you don't want to share Audio from the desktop it should still work with just the voice.
+        const source1 = context.createMediaStreamSource(desktopStream);
+        const desktopGain = context.createGain();
+        desktopGain.gain.value = 0.7;
+        source1.connect(desktopGain).connect(destination);
+        hasDesktop = true;
+    }
+
+    if (voiceStream && voiceStream.getAudioTracks().length > 0) {
+        const source2 = context.createMediaStreamSource(voiceStream);
+        const voiceGain = context.createGain();
+        voiceGain.gain.value = 0.7;
+        source2.connect(voiceGain).connect(destination);
+        hasVoice = true;
+    }
+
+    return hasDesktop || hasVoice ? destination.stream.getAudioTracks() : [];
+};
+
+AudioRecorder.functions.permissionFailure = function() {
+    Swal.fire({
+        icon: 'error',
+        title: 'Unable to Record',
+        text: 'Failed to get user permission to record. Please refresh the page to capture a recording.',
+    }).then((result) => {
+        $(AudioRecorder.settings.buttons.start).prop('disabled',true);
+    });
+}
+
+AudioRecorder.functions.pipe = function(base) {
+    let timestamp = formatDate(new Date(),'yMMdd_HHmmss');
+    base = base.replace(/\[timestamp\]/g,timestamp);
+    return base;
+}
+
+AudioRecorder.functions.onBeforeUnload = function() {
+    if ( !AudioRecorder.isSaved )
+        return false;
+    if ( AudioRecorder.functions.oldUnload != null )
+        return AudioRecorder.functions.oldUnload();
+}
+
+AudioRecorder.functions.init = async function() {
+    if ( !AudioRecorder.settings.recording.mic && !AudioRecorder.settings.recording.desktop )
+        return;
+    AudioRecorder.isRecording = false;
+    $(AudioRecorder.settings.buttons.download).prop('disabled',true);
+    $(AudioRecorder.settings.buttons.upload).prop('disabled',true);
+    $(AudioRecorder.settings.buttons.download).prop('href','#').prop('download','');
+    
+    if (AudioRecorder.settings.recording.desktop) {
+        try {
+            AudioRecorder.desktopStream = await navigator.mediaDevices.getDisplayMedia({
+                video: true, //required
+                audio: true
+            });
+        } catch (e) {
+            AudioRecorder.functions.permissionFailure();
+        }
+    }
+    
+    if (AudioRecorder.settings.recording.mic) {
+        try {
+            AudioRecorder.voiceStream = await navigator.mediaDevices.getUserMedia({
+                video: false,
+                audio: true
+            });
+        } catch (e) {
+            AudioRecorder.functions.permissionFailure();
+        }
+    }
+    
+    let tracks = [
+        ...AudioRecorder.functions.mergeAudioStreams(AudioRecorder.desktopStream, AudioRecorder.voiceStream)
+    ];
+    AudioRecorder.stream = new MediaStream(tracks);
+    AudioRecorder.blobs = [];
+
+    AudioRecorder.rec = new MediaRecorder(AudioRecorder.stream, {
+        mimeType: "audio/"+AudioRecorder.extention+";codecs="+AudioRecorder.codecs
+    });
+    AudioRecorder.rec.ondataavailable = (e) => AudioRecorder.blobs.push(e.data);
+    AudioRecorder.rec.onstop = async () => {
+        AudioRecorder.blob = new Blob(AudioRecorder.blobs, {
+            type: "audio/"+AudioRecorder.extention
+        });
+        AudioRecorder.url = window.URL.createObjectURL(AudioRecorder.blob);
+        AudioRecorder.file = AudioRecorder.functions.pipe(AudioRecorder.settings.destination)+'.'+AudioRecorder.extention;
+        AudioRecorder.download = AudioRecorder.file.includes(':\\') ? AudioRecorder.file.split('\\').pop() : AudioRecorder.file.split('/').pop();
+        if ( AudioRecorder.settings.buttons.download )
+            $(AudioRecorder.settings.buttons.download).prop('href',AudioRecorder.url).prop('download',download).prop('disabled',false);
+        $(AudioRecorder.settings.buttons.upload).prop('disabled',false);
+    };
+    $(AudioRecorder.settings.buttons.start).prop('disabled',false);
+    $(AudioRecorder.settings.buttons.init).prop('disabled',true);
+}
+
+AudioRecorder.functions.start = function() {
+    if ( AudioRecorder.isRecording || !(AudioRecorder.settings.recording.desktop || AudioRecorder.settings.recording.mic) )
+        return;
+    AudioRecorder.blob = null;
+    AudioRecorder.isSaved = false;
+    AudioRecorder.isRecording = true;
+    $(AudioRecorder.settings.buttons.start).prop('disabled',true);
+    $(AudioRecorder.settings.buttons.stop).prop('disabled',false);
+    try {
+        AudioRecorder.rec.start();
+    } catch (e) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Nothing to record!',
+            text: 'No live feeds are available for audio recording. This may be a browser or OS issue.',
+        });
+    }
+}
+
+AudioRecorder.functions.stop = function() {
+    if ( !AudioRecorder.isRecording )
+        return;
+    AudioRecorder.isRecording = false;
+    $(AudioRecorder.settings.buttons.init).prop('disabled',false);
+    $(AudioRecorder.settings.buttons.start).prop('disabled',true);
+    $(AudioRecorder.settings.buttons.stop).prop('disabled',true);
+    
+    AudioRecorder.rec.stop();
+    
+    AudioRecorder.stream.getTracks().forEach((s) => s.stop());
+    AudioRecorder.stream = null;
+    AudioRecorder.voiceStream = null;
+}
+
+AudioRecorder.functions.upload = function() {
+    if ( AudioRecorder.isRecording )
+        return;
+    if ( AudioRecorder.blob == null ) {
+        setTimeout(AudioRecorder.functions.upload, 250);
+        return;
+    }
+    AudioRecorder.isSaved = true;
+    let formData = new FormData();
+    formData.append('file', AudioRecorder.blob);
+    formData.append('destination', AudioRecorder.file);
+    $.ajax({
+        type: 'POST',
+        url: AudioRecorder.uploadPOST,
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function(data) {
+            data = JSON.parse(data);
+            console.log(data);
+            if ( data.success ) 
+                return;
+            let footer = '';
+            let text = 'Issue uploading recording to REDCap server.';
+            if ( AudioRecorder.settings.email ) {
+                let msg = `tmp: ${data.tmp}\ndst: ${data.target}\nuser: ${$("#username-reference").text()}\ntime: ${(new Date()).toString()}\nurl: ${window.location.href}`;
+                sendSingleEmail(AudioRecorder.sendingEmail,AudioRecorder.settings.email,'AudioRecorder - Failed to move file',msg);
+                text = text + ' Your REDCap administrator has been notified of this issue and may be able to recover the recording.'
+            }
+            if ( AudioRecorder.settings.fallback ) {
+                footer = `<a href="${AudioRecorder.url}" download="${AudioRecorder.download}"><b>Download Recording</b></a>`;
+                text = text + ' It is strongly recommended that you download the recording below.';
+            }
+            Swal.fire({
+                icon: 'error',
+                title: 'Recoverable Upload Error',
+                text: text, 
+                footer: footer,
+                allowOutsideClick: AudioRecorder.settings.fallback
+            });
+        },
+        error: function(jqXHR, textStatus, errorMessage) {
+            let footer = '';
+            let text = 'Unable to upload recording to REDCap server.';
+            if ( AudioRecorder.settings.email ) {
+                let msg = `user: ${$("#username-reference").text()}\ntime: ${(new Date()).toString()}\nurl: ${window.location.href}\nerror: ${JSON.stringify(errorMessage)}`;
+                sendSingleEmail(AudioRecorder.sendingEmail,AudioRecorder.settings.email,'AudioRecorder - Failed to post file',msg);
+            }
+            if ( AudioRecorder.settings.fallback ) {
+                footer = `<a href="${AudioRecorder.url}" download="${AudioRecorder.download}"><b>Download Recording</b></a>`;
+                text = text + ' It is strongly recommended that you download the recording below and report this incident to your REDCap administrator.';
+            }
+            Swal.fire({
+                icon: 'error',
+                title: 'Unrecoverable Upload Error',
+                text: text,
+                footer: footer,
+                allowOutsideClick: AudioRecorder.settings.fallback
+            });
+        }
+    });
+    $(AudioRecorder.settings.buttons.upload).prop('disabled',true);
+}
+
+AudioRecorder.functions.download = function() {
+    let link = $(AudioRecorder.settings.buttons.download).prop('href');
+    if ( AudioRecorder.isRecording || !link || link == '#' )
+        return
+    AudioRecorder.isSaved = true;
+}
+
+AudioRecorder.functions.attachEvents = function() {
+    $(AudioRecorder.settings.buttons.init).on('click', AudioRecorder.functions.init);
+    $(AudioRecorder.settings.buttons.start).on('click', AudioRecorder.functions.start);
+    $(AudioRecorder.settings.buttons.stop).on('click', AudioRecorder.functions.stop);
+    $(AudioRecorder.settings.buttons.upload).on('click', AudioRecorder.functions.upload);
+    $(AudioRecorder.settings.buttons.download).on('click', AudioRecorder.functions.download);
+    AudioRecorder.functions.oldUnload = window.onbeforeunload;
+    window.onbeforeunload = AudioRecorder.functions.onBeforeUnload;
+}
+
+$(document).ready(function () {
+    if (typeof Shazam == "object") { 
+        let oldCallback = Shazam.beforeDisplayCallback;
+        Shazam.beforeDisplayCallback = function () {
+            if (typeof oldCallback == "function") 
+                oldCallback();
+            AudioRecorder.functions.attachEvents();
+        }
+        setTimeout(AudioRecorder.functions.attachEvents, 2000);
+    }
+    else 
+        AudioRecorder.functions.attachEvents();
+});

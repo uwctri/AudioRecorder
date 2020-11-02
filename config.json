@@ -1,0 +1,105 @@
+{
+    "name": "Audio Recorder",
+    "description": "Record system and microphone audio and save to local or redcap storage.",
+    "namespace": "UWMadison\\AudioRecorder",
+    "authors": [
+        {
+            "name": "Adam Nunez",
+            "email": "Adam.Nunez@ctri.wisc.edu",
+            "institution": "UW Madison - Center for Tobacco Research and Intervention "
+        }
+    ],
+    "permissions": [
+        "redcap_every_page_top",
+        "redcap_data_entry_form"
+    ],
+    "framework-version": 5,
+    "links": {
+        "project": [
+            {
+                "name": "Audio Recorder",
+                "icon": "fa fa-microphone",
+                "url": "index.php"
+            }
+        ]
+    },
+    "project-settings": [
+        {
+            "key": "descriptive",
+            "name": "Audio Recorder will disable/enable buttons that are not apporpirate to use, but not on page load. Buttons are never hidden.",
+            "type": "descriptive"
+        },
+        {
+            "key": "show-em-link",
+            "name": "<b>Show 'Audio Recoder' EM link</b>",
+            "type": "checkbox"
+        },
+        {
+            "key": "email",
+            "name": "<b>Email issue report to</b><br>If, for any reason, REDCap is not able to save the<br>audio to the destination an email of the incident<br>will be sent here",
+            "type": "textbox"
+        },
+        {
+            "key": "recorder-instance",
+            "name": "<b>Audio Recorder</b>",
+            "type": "sub_settings",
+            "repeatable":true,
+            "sub_settings":[
+                {
+                    "key": "instrument",
+                    "name": "<b>Instrument</b><br>Forms to show the recorder on",
+                    "type": "form-list",
+                    "repeatable": true
+                },
+                {
+                    "key": "desktop",
+                    "name": "<b>Record Desktop Audio</b>",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "mic",
+                    "name": "<b>Record Microphone Audio</b>",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "init-recording",
+                    "name": "<b>Initialize Button</b><br>CSS selector for button class or id",
+                    "type": "textbox"
+                },
+                {
+                    "key": "start-recording",
+                    "name": "<b>Start Recording Button</b><br>CSS selector for button class or id",
+                    "type": "textbox"
+                },
+                {
+                    "key": "stop-recording",
+                    "name": "<b>Stop Recording Button</b><br>CSS selector for button class or id",
+                    "type": "textbox"
+                },
+                {
+                    "key": "upload-recording",
+                    "name": "<b>Upload Recording Button</b><br>CSS selector for button class or id",
+                    "type": "textbox"
+                },
+                {
+                    "key": "download-recording",
+                    "name": "<b>Download Recording Button</b><br>CSS selector for button class or id",
+                    "type": "textbox"
+                },
+                {
+                    "key": "destination",
+                    "name": "",
+                    "type": "textbox"
+                },
+                {
+                    "key": "fallback",
+                    "name": "<b>Recommend local download if upload fails</b><br>The error popup will contain a download link",
+                    "type": "checkbox"
+                }
+            ]
+        }
+    ],
+    "compatibility": {
+        "redcap-version-min": "10.0.0"
+    }
+}
