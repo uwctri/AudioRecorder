@@ -18,6 +18,8 @@ class AudioRecorder extends AbstractExternalModule {
     private $module_global = 'AudioRecorder';
     private $module_name = 'AudioRecorder';
     
+    private $notifyJS = 'https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js';
+    
     public function __construct() {
         parent::__construct();
     }
@@ -50,6 +52,7 @@ class AudioRecorder extends AbstractExternalModule {
                 ]
             ];
             $this->passArgument('settings',$settings);
+            $this->includeNotifyJS();
             $this->includeJs('recorder.js');
         }
         
@@ -96,6 +99,7 @@ class AudioRecorder extends AbstractExternalModule {
             ]
         ];
         $this->passArgument('settings',$settings);
+        $this->includeNotifyJS();
         $this->includeJs('recorder.js');
     }
     
@@ -113,6 +117,10 @@ class AudioRecorder extends AbstractExternalModule {
     
     private function includeJs($path) {
         echo '<script src="' . $this->getUrl($path) . '"></script>';
+    }
+    
+    private function includeNotifyJS() {
+        echo '<script src="' . $this->notifyJS . '"></script>';
     }
     
     private function getPipingHelperButtons() {

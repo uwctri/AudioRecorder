@@ -1,9 +1,12 @@
 AudioRecorder.functions = {};
+AudioRecorder.initFailure = false;
 AudioRecorder.isRecording = false;
 AudioRecorder.isSaved = true;
 AudioRecorder.extention = 'webm';
 AudioRecorder.codecs = 'opus';
 AudioRecorder.sendingEmail = 'redcap@ctri.wisc.edu'; //TODO
+AudioRecorder.notifyStay = {clickToHide:false,autoHide:false,className:'info',position:'top center'};
+AudioRecorder.notifyTmp = {clickToHide:false,className:'success',position:'top center'};
 
 AudioRecorder.functions.mergeAudioStreams = function(desktopStream, voiceStream) {
     const context = new AudioContext();
@@ -31,6 +34,7 @@ AudioRecorder.functions.mergeAudioStreams = function(desktopStream, voiceStream)
 };
 
 AudioRecorder.functions.permissionFailure = function() {
+    AudioRecorder.initFailure = true;
     Swal.fire({
         icon: 'error',
         title: 'Unable to Record',
@@ -104,8 +108,12 @@ AudioRecorder.functions.init = async function() {
             $(AudioRecorder.settings.buttons.download).prop('href',AudioRecorder.url).prop('download',download).prop('disabled',false);
         $(AudioRecorder.settings.buttons.upload).prop('disabled',false);
     };
-    $(AudioRecorder.settings.buttons.start).prop('disabled',false);
-    $(AudioRecorder.settings.buttons.init).prop('disabled',true);
+    
+    if (!AudioRecorder.initFailure) {
+        $(AudioRecorder.settings.buttons.start).prop('disabled',false);
+        $(AudioRecorder.settings.buttons.init).prop('disabled',true);
+        $.notify("Recording Initalized!",AudioRecorder.notifyTmp);
+    }
 }
 
 AudioRecorder.functions.start = function() {
@@ -118,6 +126,7 @@ AudioRecorder.functions.start = function() {
     $(AudioRecorder.settings.buttons.stop).prop('disabled',false);
     try {
         AudioRecorder.rec.start();
+        $.notify("Recording Audio",AudioRecorder.notifyStay);
     } catch (e) {
         Swal.fire({
             icon: 'error',
@@ -136,6 +145,7 @@ AudioRecorder.functions.stop = function() {
     $(AudioRecorder.settings.buttons.stop).prop('disabled',true);
     
     AudioRecorder.rec.stop();
+    $(".notifyjs-wrapper").slideUp("normal", function() { $(this).remove(); } );
     
     AudioRecorder.stream.getTracks().forEach((s) => s.stop());
     AudioRecorder.stream = null;
@@ -162,8 +172,10 @@ AudioRecorder.functions.upload = function() {
         success: function(data) {
             data = JSON.parse(data);
             console.log(data);
-            if ( data.success ) 
+            if ( data.success ) {
+                $.notify("Recording Successfully Uploaded!", AudioRecorder.notifyTmp);
                 return;
+            }
             let footer = '';
             let text = 'Issue uploading recording to REDCap server.';
             if ( AudioRecorder.settings.email ) {
