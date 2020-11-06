@@ -125,6 +125,7 @@ AudioRecorder.functions.start = function() {
     $(AudioRecorder.settings.buttons.stop).prop('disabled',false);
     try {
         AudioRecorder.rec.start();
+        AudioRecorder.functions.disableSaveButtons();
         $.notify("Recording Audio",AudioRecorder.notifyStay);
         //Record atleast 1 second of audio before allowing a stop
         setTimeout( function() { AudioRecorder.isRecording = true; }, 1000);
@@ -146,6 +147,7 @@ AudioRecorder.functions.stop = function() {
     $(AudioRecorder.settings.buttons.init).prop('disabled',false);
     $(AudioRecorder.settings.buttons.start).prop('disabled',true);
     $(AudioRecorder.settings.buttons.stop).prop('disabled',true);
+    AudioRecorder.functions.enableSaveButtons();
     
     AudioRecorder.rec.stop();
     $(".notifyjs-wrapper").slideUp("normal", function() { $(this).remove(); } );
@@ -237,6 +239,23 @@ AudioRecorder.functions.attachEvents = function() {
     AudioRecorder.functions.oldUnload = window.onbeforeunload;
     window.onbeforeunload = AudioRecorder.functions.onBeforeUnload;
 }
+
+AudioRecorder.functions.enableSaveButtons = function() {
+    $("#__SUBMITBUTTONS__-tr button").css('pointer-events', '').removeClass('disabled');
+    $(".tmpDisableSave").remove();
+}
+
+AudioRecorder.functions.disableSaveButtons = function() {
+    $("#__SUBMITBUTTONS__-tr button").css('pointer-events', 'none').addClass('disabled');
+    if ( $(".tmpDisableSave").length == 0 )
+        $("#__SUBMITBUTTONS__-tr button").last().after(`<span class='text-bold text-danger tmpDisableSave'><br>* Form saving disabled while recording audio</span>`);
+}
+
+$(window).on("beforeunload", function(){
+    if ( AudioRecorder.isRecording )
+        return "Recording in progress!";
+    return;
+});
 
 $(document).ready(function () {
     if (typeof Shazam == "object") { 
