@@ -39,6 +39,7 @@ class AudioRecorder extends AbstractExternalModule {
                 'email' => $this->getProjectSetting('email'),
                 'destination' => 'c:\testUploads\[timestamp]',
                 'fallback' => true,
+                'noStartError' => false,
                 'recording' => [
                     'desktop' => true,
                     'mic' => true
@@ -85,7 +86,8 @@ class AudioRecorder extends AbstractExternalModule {
         $settings = [
             'email' => $settings['email'],
             'destination' => $dest,
-            'fallback' => $settings['fallback'][$settingIndex] == '1',
+            'fallback' => $settings['suppress-start-error'][$settingIndex] == '1',
+            'noStartError' => $settings['fallback'][$settingIndex] == '1',
             'recording' => [
                 'desktop' => $settings['desktop'][$settingIndex] == '1',
                 'mic' => $settings['mic'][$settingIndex] == '1'

@@ -121,13 +121,16 @@ AudioRecorder.functions.start = function() {
         return;
     AudioRecorder.blob = null;
     AudioRecorder.isSaved = false;
-    AudioRecorder.isRecording = true;
     $(AudioRecorder.settings.buttons.start).prop('disabled',true);
     $(AudioRecorder.settings.buttons.stop).prop('disabled',false);
     try {
         AudioRecorder.rec.start();
         $.notify("Recording Audio",AudioRecorder.notifyStay);
+        //Record atleast 1 second of audio before allowing a stop
+        setTimeout( function() { AudioRecorder.isRecording = true; }, 1000);
     } catch (e) {
+        if ( AudioRecorder.settings.noStartError )
+            return;
         Swal.fire({
             icon: 'error',
             title: 'Nothing to record!',
@@ -192,7 +195,7 @@ AudioRecorder.functions.upload = function() {
                 title: 'Recoverable Upload Error',
                 text: text, 
                 footer: footer,
-                allowOutsideClick: AudioRecorder.settings.fallback
+                allowOutsideClick: !AudioRecorder.settings.fallback
             });
         },
         error: function(jqXHR, textStatus, errorMessage) {
@@ -211,7 +214,7 @@ AudioRecorder.functions.upload = function() {
                 title: 'Unrecoverable Upload Error',
                 text: text,
                 footer: footer,
-                allowOutsideClick: AudioRecorder.settings.fallback
+                allowOutsideClick: !AudioRecorder.settings.fallback
             });
         }
     });

@@ -95,6 +95,11 @@
                     "key": "fallback",
                     "name": "<b>Recommend local download if upload fails</b><br>The error popup will contain a download link",
                     "type": "checkbox"
+                },
+                {
+                    "key": "suppress-start-error",
+                    "name": "<b>Suppress Start Error</b><br>Useful if the record button is dual purpose and may not record audio",
+                    "type": "checkbox"
                 }
             ]
         }
