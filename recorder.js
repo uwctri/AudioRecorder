@@ -258,6 +258,9 @@ $(window).on("beforeunload", function(){
 });
 
 $(document).ready(function () {
+    // Remove illegal charachters from file path
+    AudioRecorder.settings.destination = AudioRecorder.settings.destination.replace(/[\/:*?"<>|]/g,'');
+    // Load the recorder, play nice w/ Shazam
     if (typeof Shazam == "object") { 
         let oldCallback = Shazam.beforeDisplayCallback;
         Shazam.beforeDisplayCallback = function () {
