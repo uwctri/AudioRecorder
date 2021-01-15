@@ -1,10 +1,12 @@
 AudioRecorder.functions = {};
+AudioRecorder.isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor) && (navigator.userAgent.split('Chrome/')[1].split('.')[0] >= 74);
 AudioRecorder.initFailure = false;
+AudioRecorder.initSuccess = false;
 AudioRecorder.isRecording = false;
+AudioRecorder.showInitError = true;
 AudioRecorder.isSaved = true;
 AudioRecorder.extention = 'webm';
 AudioRecorder.codecs = 'opus';
-AudioRecorder.sendingEmail = 'redcap@ctri.wisc.edu'; //TODO
 AudioRecorder.notifyStay = {clickToHide:false,autoHide:false,className:'info',position:'top center'};
 AudioRecorder.notifyTmp = {clickToHide:false,className:'success',position:'top center'};
 
@@ -58,6 +60,14 @@ AudioRecorder.functions.onBeforeUnload = function() {
 }
 
 AudioRecorder.functions.init = async function() {
+    if ( !AudioRecorder.isChrome ) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Unsupported Browser',
+            text: 'Currently only Google Chrome is supported for audio recording.',
+        });
+        return;
+    }
     if ( !AudioRecorder.settings.recording.mic && !AudioRecorder.settings.recording.desktop )
         return;
     AudioRecorder.isRecording = false;
@@ -113,12 +123,24 @@ AudioRecorder.functions.init = async function() {
         $(AudioRecorder.settings.buttons.start).prop('disabled',false);
         $(AudioRecorder.settings.buttons.init).prop('disabled',true);
         $.notify("Recording Initalized!",AudioRecorder.notifyTmp);
+        AudioRecorder.initSuccess = true;
     }
 }
 
 AudioRecorder.functions.start = function() {
     if ( AudioRecorder.isRecording || !(AudioRecorder.settings.recording.desktop || AudioRecorder.settings.recording.mic) )
         return;
+    if ( !AudioRecorder.initSuccess ) {
+        if ( AudioRecorder.showInitError ) { // Show only every other click, we might be using a toggle
+            Swal.fire({
+                icon: 'error',
+                title: 'Recorder not Initalized',
+                text: 'Please initalize before attempting to record.',
+            });
+        }
+        AudioRecorder.showInitError = !AudioRecorder.showInitError;
+        return;
+    }
     AudioRecorder.blob = null;
     AudioRecorder.isSaved = false;
     $(AudioRecorder.settings.buttons.start).prop('disabled',true);
@@ -183,9 +205,9 @@ AudioRecorder.functions.upload = function() {
             }
             let footer = '';
             let text = 'Issue uploading recording to REDCap server.';
-            if ( AudioRecorder.settings.email ) {
+            if ( AudioRecorder.errorEmail ) {
                 let msg = `tmp: ${data.tmp}\ndst: ${data.target}\nuser: ${$("#username-reference").text()}\ntime: ${(new Date()).toString()}\nurl: ${window.location.href}`;
-                sendSingleEmail(AudioRecorder.sendingEmail,AudioRecorder.settings.email,'AudioRecorder - Failed to move file',msg);
+                sendSingleEmail(AudioRecorder.sendingEmail,AudioRecorder.errorEmail,'AudioRecorder - Failed to move file',msg);
                 text = text + ' Your REDCap administrator has been notified of this issue and may be able to recover the recording.'
             }
             if ( AudioRecorder.settings.fallback ) {
@@ -203,9 +225,9 @@ AudioRecorder.functions.upload = function() {
         error: function(jqXHR, textStatus, errorMessage) {
             let footer = '';
             let text = 'Unable to upload recording to REDCap server.';
-            if ( AudioRecorder.settings.email ) {
+            if ( AudioRecorder.errorEmail ) {
                 let msg = `user: ${$("#username-reference").text()}\ntime: ${(new Date()).toString()}\nurl: ${window.location.href}\nerror: ${JSON.stringify(errorMessage)}`;
-                sendSingleEmail(AudioRecorder.sendingEmail,AudioRecorder.settings.email,'AudioRecorder - Failed to post file',msg);
+                sendSingleEmail(AudioRecorder.sendingEmail,AudioRecorder.errorEmail,'AudioRecorder - Failed to post file',msg);
             }
             if ( AudioRecorder.settings.fallback ) {
                 footer = `<a href="${AudioRecorder.url}" download="${AudioRecorder.download}"><b>Download Recording</b></a>`;
@@ -258,8 +280,8 @@ $(window).on("beforeunload", function(){
 });
 
 $(document).ready(function () {
-    // Remove illegal charachters from file path
-    AudioRecorder.settings.destination = AudioRecorder.settings.destination.replace(/[\/:*?"<>|]/g,'');
+    // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
+    AudioRecorder.settings.destination = AudioRecorder.settings.destination.replace(/[\/*?"<>|]/g,'');
     // Load the recorder, play nice w/ Shazam
     if (typeof Shazam == "object") { 
         let oldCallback = Shazam.beforeDisplayCallback;

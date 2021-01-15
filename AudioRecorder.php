@@ -106,7 +106,11 @@ class AudioRecorder extends AbstractExternalModule {
     }
     
     private function initGlobal() {
+        global $project_contact_email;
+        global $from_email;
         $data = array(
+            "errorEmail" => $this->getSystemSetting('error-email'),
+            "sendingEmail" => $from_email ? $from_email : $project_contact_email,
             "modulePrefix" => $this->module_prefix,
             "uploadPOST" => $this->getUrl('upload.php')
         );
