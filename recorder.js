@@ -102,7 +102,7 @@ AudioRecorder.functions.init = async function() {
     ];
     AudioRecorder.stream = new MediaStream(tracks);
     AudioRecorder.blobs = [];
-
+    
     AudioRecorder.rec = new MediaRecorder(AudioRecorder.stream, {
         mimeType: "audio/"+AudioRecorder.extention+";codecs="+AudioRecorder.codecs
     });
@@ -142,6 +142,7 @@ AudioRecorder.functions.start = function() {
         return;
     }
     AudioRecorder.blob = null;
+    AudioRecorder.blobs = [];
     AudioRecorder.isSaved = false;
     $(AudioRecorder.settings.buttons.start).prop('disabled',true);
     $(AudioRecorder.settings.buttons.stop).prop('disabled',false);
@@ -174,9 +175,12 @@ AudioRecorder.functions.stop = function() {
     AudioRecorder.rec.stop();
     $(".notifyjs-wrapper").slideUp("normal", function() { $(this).remove(); } );
     
-    AudioRecorder.stream.getTracks().forEach((s) => s.stop());
-    AudioRecorder.stream = null;
-    AudioRecorder.voiceStream = null;
+    //If we stop the tracks and null out the streams we won't be able to record againt without re-init
+    //AudioRecorder.stream.getTracks().forEach((s) => s.stop());
+    AudioRecorder.functions.initRecorder();
+    
+    //AudioRecorder.stream = null;
+    //AudioRecorder.voiceStream = null;
 }
 
 AudioRecorder.functions.upload = function() {
