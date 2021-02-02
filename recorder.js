@@ -177,7 +177,6 @@ AudioRecorder.functions.stop = function() {
     
     //If we stop the tracks and null out the streams we won't be able to record againt without re-init
     //AudioRecorder.stream.getTracks().forEach((s) => s.stop());
-    AudioRecorder.functions.initRecorder();
     
     //AudioRecorder.stream = null;
     //AudioRecorder.voiceStream = null;
