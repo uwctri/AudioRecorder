@@ -107,6 +107,11 @@
                     "key": "suppress-start-error",
                     "name": "<b>Suppress Start Error</b><br>Useful if the record button is dual purpose and may not record audio",
                     "type": "checkbox"
+                },
+                {
+                    "key": "outcome",
+                    "name": "<b>Record Outcome</b><br>A text field on the instrument will be populated with the date time (d/m/y h:m) of succesfull upload or the text 'Failure'",
+                    "type": "field-list"
                 }
             ]
         }

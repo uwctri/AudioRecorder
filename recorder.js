@@ -204,6 +204,8 @@ AudioRecorder.functions.upload = function() {
             console.log(data);
             if ( data.success ) {
                 $.notify("Recording Successfully Uploaded!", AudioRecorder.notifyTmp);
+                if ( AudioRecorder.settings.outcome )
+                    $(`[name=${AudioRecorder.settings.outcome}]`).val( formatDate(new Date(),'MM-dd-y hh:mma').toLowerCase() );
                 return;
             }
             let footer = '';
@@ -217,6 +219,8 @@ AudioRecorder.functions.upload = function() {
                 footer = `<a href="${AudioRecorder.url}" download="${AudioRecorder.download}"><b>Download Recording</b></a>`;
                 text = text + ' It is strongly recommended that you download the recording below.';
             }
+            if ( AudioRecorder.settings.outcome )
+                $(`[name=${AudioRecorder.settings.outcome}]`).val( "Failure" );
             Swal.fire({
                 icon: 'error',
                 title: 'Recoverable Upload Error',
@@ -236,6 +240,8 @@ AudioRecorder.functions.upload = function() {
                 footer = `<a href="${AudioRecorder.url}" download="${AudioRecorder.download}"><b>Download Recording</b></a>`;
                 text = text + ' It is strongly recommended that you download the recording below and report this incident to your REDCap administrator.';
             }
+            if ( AudioRecorder.settings.outcome )
+                $(`[name=${AudioRecorder.settings.outcome}]`).val( "Failure" );
             Swal.fire({
                 icon: 'error',
                 title: 'Unrecoverable Upload Error',

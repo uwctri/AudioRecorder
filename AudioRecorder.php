@@ -86,8 +86,9 @@ class AudioRecorder extends AbstractExternalModule {
         $settings = [
             'email' => $settings['email'],
             'destination' => $dest,
-            'fallback' => $settings['suppress-start-error'][$settingIndex] == '1',
-            'noStartError' => $settings['fallback'][$settingIndex] == '1',
+            'noStartError' => $settings['suppress-start-error'][$settingIndex] == '1',
+            'fallback' => $settings['fallback'][$settingIndex] == '1',
+            'outcome' => $settings['outcome'][$settingIndex],
             'recording' => [
                 'desktop' => $settings['desktop'][$settingIndex] == '1',
                 'mic' => $settings['mic'][$settingIndex] == '1'
