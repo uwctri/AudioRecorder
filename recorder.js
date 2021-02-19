@@ -10,6 +10,12 @@ AudioRecorder.codecs = 'opus';
 AudioRecorder.notifyStay = {clickToHide:false,autoHide:false,className:'info',position:'top center'};
 AudioRecorder.notifyTmp = {clickToHide:false,className:'success',position:'top center'};
 
+AudioRecorder.functions.log = function(action, details) {
+    if (typeof ez !== "undefined") {
+        ez.log(action, details);
+    }
+}
+
 AudioRecorder.functions.mergeAudioStreams = function(desktopStream, voiceStream) {
     const context = new AudioContext();
     const destination = context.createMediaStreamDestination();
@@ -124,6 +130,7 @@ AudioRecorder.functions.init = async function() {
         $(AudioRecorder.settings.buttons.init).prop('disabled',true);
         $.notify("Recording Initalized!",AudioRecorder.notifyTmp);
         AudioRecorder.initSuccess = true;
+        AudioRecorder.functions.log('Audio Recorder', 'Initalized');
     }
 }
 
@@ -152,6 +159,7 @@ AudioRecorder.functions.start = function() {
         $.notify("Recording Audio",AudioRecorder.notifyStay);
         //Record atleast 1 second of audio before allowing a stop
         setTimeout( function() { AudioRecorder.isRecording = true; }, 1000);
+        AudioRecorder.functions.log('Audio Recorder', 'Recording Started');
     } catch (e) {
         if ( AudioRecorder.settings.noStartError )
             return;
@@ -174,6 +182,7 @@ AudioRecorder.functions.stop = function() {
     
     AudioRecorder.rec.stop();
     $(".notifyjs-wrapper").slideUp("normal", function() { $(this).remove(); } );
+    AudioRecorder.functions.log('Audio Recorder', 'Recording Stoped');
     
     //If we stop the tracks and null out the streams we won't be able to record againt without re-init
     //AudioRecorder.stream.getTracks().forEach((s) => s.stop());
@@ -204,6 +213,7 @@ AudioRecorder.functions.upload = function() {
             console.log(data);
             if ( data.success ) {
                 $.notify("Recording Successfully Uploaded!", AudioRecorder.notifyTmp);
+                AudioRecorder.functions.log('Audio Recorder', 'Recording Uploaded:\n'+AudioRecorder.download);
                 if ( AudioRecorder.settings.outcome )
                     $(`[name=${AudioRecorder.settings.outcome}]`).val( formatDate(new Date(),'MM-dd-y hh:mma').toLowerCase() );
                 return;
