@@ -2,6 +2,7 @@ AudioRecorder.functions = {};
 AudioRecorder.isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor) && (navigator.userAgent.split('Chrome/')[1].split('.')[0] >= 74);
 AudioRecorder.initFailure = false;
 AudioRecorder.initSuccess = false;
+AudioRecorder.initAttach = false;
 AudioRecorder.isRecording = false;
 AudioRecorder.showInitError = true;
 AudioRecorder.isSaved = true;
@@ -74,6 +75,8 @@ AudioRecorder.functions.init = async function() {
         });
         return;
     }
+    if ( AudioRecorder.initSuccess )
+        return;
     if ( !AudioRecorder.settings.recording.mic && !AudioRecorder.settings.recording.desktop )
         return;
     AudioRecorder.isRecording = false;
@@ -81,26 +84,21 @@ AudioRecorder.functions.init = async function() {
     $(AudioRecorder.settings.buttons.upload).prop('disabled',true);
     $(AudioRecorder.settings.buttons.download).prop('href','#').prop('download','');
     
-    if (AudioRecorder.settings.recording.desktop) {
-        try {
-            AudioRecorder.desktopStream = await navigator.mediaDevices.getDisplayMedia({
-                video: true, //required
-                audio: true
-            });
-        } catch (e) {
-            AudioRecorder.functions.permissionFailure();
-        }
-    }
-    
-    if (AudioRecorder.settings.recording.mic) {
-        try {
+    try {
+        if (AudioRecorder.settings.recording.mic) {
             AudioRecorder.voiceStream = await navigator.mediaDevices.getUserMedia({
                 video: false,
                 audio: true
             });
-        } catch (e) {
-            AudioRecorder.functions.permissionFailure();
         }
+        if (AudioRecorder.settings.recording.desktop) {
+            AudioRecorder.desktopStream = await navigator.mediaDevices.getDisplayMedia({
+                video: true, //required
+                audio: true
+            });
+        }
+    } catch (e) {
+        AudioRecorder.functions.permissionFailure();
     }
     
     let tracks = [
@@ -272,6 +270,9 @@ AudioRecorder.functions.download = function() {
 }
 
 AudioRecorder.functions.attachEvents = function() {
+    if ( AudioRecorder.initAttach )
+        return;
+    AudioRecorder.initAttach = true;
     $(AudioRecorder.settings.buttons.init).on('click', AudioRecorder.functions.init);
     $(AudioRecorder.settings.buttons.start).on('click', AudioRecorder.functions.start);
     $(AudioRecorder.settings.buttons.stop).on('click', AudioRecorder.functions.stop);
