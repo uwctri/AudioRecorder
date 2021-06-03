@@ -101,6 +101,11 @@ AudioRecorder.functions.init = async function() {
         AudioRecorder.functions.permissionFailure();
     }
     
+    if ( AudioRecorder.settings.recording.desktop && AudioRecorder.desktopStream.getAudioTracks().length < 1 ) {
+        AudioRecorder.functions.permissionFailure();
+        return;
+    }
+    
     let tracks = [
         ...AudioRecorder.functions.mergeAudioStreams(AudioRecorder.desktopStream, AudioRecorder.voiceStream)
     ];
