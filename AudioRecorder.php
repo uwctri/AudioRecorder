@@ -8,26 +8,15 @@ use REDCap;
 use Piping;
 use RCView;
 
-function printToScreen($string) {
-    ?><script>console.log(<?=json_encode($string); ?>);</script><?php
-}
-
 class AudioRecorder extends AbstractExternalModule {
     
     private $module_prefix = 'audio_recorder';
     private $module_global = 'AudioRecorder';
-    private $module_name = 'AudioRecorder';
     
     private $notifyJS = 'https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js';
     
-    public function __construct() {
-        parent::__construct();
-    }
-    
     public function redcap_module_link_check_display($project_id, $link) {
-        if ( $this->getProjectSetting('show-em-link') )
-            return true;
-        return false;
+        return $this->getProjectSetting('show-em-link');
     }
     
     public function redcap_every_page_top($project_id) {

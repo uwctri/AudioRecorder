@@ -25,8 +25,6 @@ button {
 <a id="upload" href="#" style="display: none;">Upload to Server</a>
 
 <script>
-    // todo - popup when we start recording that is persisitant?
-    
     $("#audioToggle, #micAudioToggle").on('click', function () {
         $("#initBtn").prop('disabled', !$("#audioToggle, #micAudioToggle").is(":checked") );
         AudioRecorder.settings.recording.desktop = $("#audioToggle").is(":checked");
