@@ -10,6 +10,7 @@ AudioRecorder.extention = 'webm';
 AudioRecorder.codecs = 'opus';
 AudioRecorder.notifyStay = {clickToHide:false,autoHide:false,className:'info',position:'top center'};
 AudioRecorder.notifyTmp = {clickToHide:false,className:'success',position:'top center'};
+AudioRecorder.disableCalls = 0;
 
 AudioRecorder.functions.log = function(action, details) {
     if (typeof ez !== "undefined") {
@@ -158,7 +159,7 @@ AudioRecorder.functions.start = function() {
     $(AudioRecorder.settings.buttons.stop).prop('disabled',false);
     try {
         AudioRecorder.rec.start();
-        AudioRecorder.functions.disableSaveButtons();
+        AudioRecorder.functions.disableSaveButtons('recording audio');
         $.notify("Recording Audio",AudioRecorder.notifyStay);
         //Record atleast 1 second of audio before allowing a stop
         setTimeout( function() { AudioRecorder.isRecording = true; }, 1000);
@@ -186,12 +187,6 @@ AudioRecorder.functions.stop = function() {
     AudioRecorder.rec.stop();
     $(".notifyjs-wrapper").slideUp("normal", function() { $(this).remove(); } );
     AudioRecorder.functions.log('Audio Recorder', 'Recording Stoped');
-    
-    //If we stop the tracks and null out the streams we won't be able to record againt without re-init
-    //AudioRecorder.stream.getTracks().forEach((s) => s.stop());
-    
-    //AudioRecorder.stream = null;
-    //AudioRecorder.voiceStream = null;
 }
 
 AudioRecorder.functions.upload = function() {
@@ -201,10 +196,12 @@ AudioRecorder.functions.upload = function() {
         setTimeout(AudioRecorder.functions.upload, 250);
         return;
     }
+    AudioRecorder.functions.disableSaveButtons('uploading audio');
     AudioRecorder.isSaved = true;
     let formData = new FormData();
     formData.append('file', AudioRecorder.blob);
     formData.append('destination', AudioRecorder.file);
+    $(AudioRecorder.settings.buttons.upload).prop('disabled',true);
     $.ajax({
         type: 'POST',
         url: AudioRecorder.uploadPOST,
@@ -219,6 +216,7 @@ AudioRecorder.functions.upload = function() {
                 AudioRecorder.functions.log('Audio Recorder', 'Recording Uploaded:\n'+AudioRecorder.download);
                 if ( AudioRecorder.settings.outcome )
                     $(`[name=${AudioRecorder.settings.outcome}]`).val( formatDate(new Date(),'MM-dd-y hh:mma').toLowerCase() );
+                AudioRecorder.functions.enableSaveButtons();
                 return;
             }
             let footer = '';
@@ -241,6 +239,7 @@ AudioRecorder.functions.upload = function() {
                 footer: footer,
                 allowOutsideClick: !AudioRecorder.settings.fallback
             });
+            AudioRecorder.functions.enableSaveButtons();
         },
         error: function(jqXHR, textStatus, errorMessage) {
             let footer = '';
@@ -262,9 +261,9 @@ AudioRecorder.functions.upload = function() {
                 footer: footer,
                 allowOutsideClick: !AudioRecorder.settings.fallback
             });
+            AudioRecorder.functions.enableSaveButtons();
         }
     });
-    $(AudioRecorder.settings.buttons.upload).prop('disabled',true);
 }
 
 AudioRecorder.functions.download = function() {
@@ -288,14 +287,24 @@ AudioRecorder.functions.attachEvents = function() {
 }
 
 AudioRecorder.functions.enableSaveButtons = function() {
-    $("#__SUBMITBUTTONS__-tr button").css('pointer-events', '').removeClass('disabled');
-    $(".tmpDisableSave").remove();
+    AudioRecorder.disableCalls += AudioRecorder.disableCalls > 0 ? -1 : 0;
+    setTimeout( function() {
+        if ( AudioRecorder.disableCalls == 0 ) {
+            $("#__SUBMITBUTTONS__-tr button").css('pointer-events', '').removeClass('disabled');
+            $(".tmpDisableSave").remove();
+            $(window).resize();
+        }
+    }, 500);
 }
 
-AudioRecorder.functions.disableSaveButtons = function() {
+AudioRecorder.functions.disableSaveButtons = function(displayText) {
+    AudioRecorder.disableCalls++;
     $("#__SUBMITBUTTONS__-tr button").css('pointer-events', 'none').addClass('disabled');
     if ( $(".tmpDisableSave").length == 0 )
-        $("#__SUBMITBUTTONS__-tr button").last().after(`<span class='text-bold text-danger tmpDisableSave'><br>* Form saving disabled while recording audio</span>`);
+        $("#__SUBMITBUTTONS__-tr button").last().after(`<span class='text-bold text-danger tmpDisableSave'><br>* Form saving disabled while ${displayText}</span>`);
+    else
+        $('.tmpDisableSave').html(`<br>* Form saving disabled while ${displayText}`);
+    $(window).resize();
 }
 
 $(window).on("beforeunload", function(){
