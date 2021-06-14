@@ -1,6 +1,5 @@
 <?php
 if (isset($_FILES['file'])) {
-    sleep(5);
     $out = [
         "success" => false,
         "tmp" => $_FILES['file']['tmp_name'],
