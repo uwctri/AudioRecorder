@@ -23,6 +23,7 @@ AudioRecorder.functions.mergeAudioStreams = function(desktopStream, voiceStream)
     const destination = context.createMediaStreamDestination();
     let hasDesktop = false;
     let hasVoice = false;
+    
     if (desktopStream && desktopStream.getAudioTracks().length > 0) {
         // If you don't want to share Audio from the desktop it should still work with just the voice.
         const source1 = context.createMediaStreamSource(desktopStream);
@@ -31,7 +32,7 @@ AudioRecorder.functions.mergeAudioStreams = function(desktopStream, voiceStream)
         source1.connect(desktopGain).connect(destination);
         hasDesktop = true;
     }
-
+    
     if (voiceStream && voiceStream.getAudioTracks().length > 0) {
         const source2 = context.createMediaStreamSource(voiceStream);
         const voiceGain = context.createGain();
@@ -45,6 +46,7 @@ AudioRecorder.functions.mergeAudioStreams = function(desktopStream, voiceStream)
 
 AudioRecorder.functions.permissionFailure = function() {
     AudioRecorder.initFailure = true;
+    
     Swal.fire({
         icon: 'error',
         title: 'Unable to Record',
@@ -56,13 +58,13 @@ AudioRecorder.functions.permissionFailure = function() {
 
 AudioRecorder.functions.pipe = function(base) {
     let timestamp = formatDate(new Date(),'yMMdd_HHmmss');
-    base = base.replace(/\[timestamp\]/g,timestamp);
-    return base;
+    return base.replace(/\[timestamp\]/g,timestamp);
 }
 
 AudioRecorder.functions.onBeforeUnload = function() {
     if ( !AudioRecorder.isSaved )
         return false;
+    
     if ( AudioRecorder.functions.oldUnload != null )
         return AudioRecorder.functions.oldUnload();
 }
@@ -76,10 +78,13 @@ AudioRecorder.functions.init = async function() {
         });
         return;
     }
+    
     if ( AudioRecorder.initSuccess )
         return;
+    
     if ( !AudioRecorder.settings.recording.mic && !AudioRecorder.settings.recording.desktop )
         return;
+    
     AudioRecorder.isRecording = false;
     $(AudioRecorder.settings.buttons.download).prop('disabled',true);
     $(AudioRecorder.settings.buttons.upload).prop('disabled',true);
@@ -141,6 +146,7 @@ AudioRecorder.functions.init = async function() {
 AudioRecorder.functions.start = function() {
     if ( AudioRecorder.isRecording || !(AudioRecorder.settings.recording.desktop || AudioRecorder.settings.recording.mic) )
         return;
+    
     if ( !AudioRecorder.initSuccess ) {
         if ( AudioRecorder.showInitError ) { // Show only every other click, we might be using a toggle
             Swal.fire({
@@ -152,17 +158,21 @@ AudioRecorder.functions.start = function() {
         AudioRecorder.showInitError = !AudioRecorder.showInitError;
         return;
     }
+    
     AudioRecorder.blob = null;
     AudioRecorder.blobs = [];
     AudioRecorder.isSaved = false;
     $(AudioRecorder.settings.buttons.start).prop('disabled',true);
     $(AudioRecorder.settings.buttons.stop).prop('disabled',false);
+    
     try {
         AudioRecorder.rec.start();
         AudioRecorder.functions.disableSaveButtons('recording audio');
         $.notify("Recording Audio",AudioRecorder.notifyStay);
+        
         //Record atleast 1 second of audio before allowing a stop
         setTimeout( function() { AudioRecorder.isRecording = true; }, 1000);
+        
         AudioRecorder.functions.log('Audio Recorder', 'Recording Started');
     } catch (e) {
         if ( AudioRecorder.settings.noStartError )
@@ -178,6 +188,7 @@ AudioRecorder.functions.start = function() {
 AudioRecorder.functions.stop = function() {
     if ( !AudioRecorder.isRecording )
         return;
+    
     AudioRecorder.isRecording = false;
     $(AudioRecorder.settings.buttons.init).prop('disabled',false);
     $(AudioRecorder.settings.buttons.start).prop('disabled',true);
@@ -192,10 +203,13 @@ AudioRecorder.functions.stop = function() {
 AudioRecorder.functions.upload = function() {
     if ( AudioRecorder.isRecording )
         return;
+    
+    // Nothing recorded yet, blob is only set on stop
     if ( AudioRecorder.blob == null ) {
         setTimeout(AudioRecorder.functions.upload, 250);
         return;
     }
+    
     AudioRecorder.functions.disableSaveButtons('uploading audio');
     AudioRecorder.isSaved = true;
     let formData = new FormData();
@@ -211,6 +225,7 @@ AudioRecorder.functions.upload = function() {
         success: function(data) {
             data = JSON.parse(data);
             console.log(data);
+            
             if ( data.success ) {
                 $.notify("Recording Successfully Uploaded!", AudioRecorder.notifyTmp);
                 AudioRecorder.functions.log('Audio Recorder', 'Recording Uploaded:\n'+AudioRecorder.download);
@@ -219,6 +234,7 @@ AudioRecorder.functions.upload = function() {
                 AudioRecorder.functions.enableSaveButtons();
                 return;
             }
+            
             let footer = '';
             let text = 'Issue uploading recording to REDCap server.';
             if ( AudioRecorder.errorEmail ) {
@@ -226,12 +242,15 @@ AudioRecorder.functions.upload = function() {
                 sendSingleEmail(AudioRecorder.sendingEmail,AudioRecorder.errorEmail,'AudioRecorder - Failed to move file',msg);
                 text = text + ' Your REDCap administrator has been notified of this issue and may be able to recover the recording.'
             }
+            
             if ( AudioRecorder.settings.fallback ) {
                 footer = `<a href="${AudioRecorder.url}" download="${AudioRecorder.download}"><b>Download Recording</b></a>`;
                 text = text + ' It is strongly recommended that you download the recording below.';
             }
+            
             if ( AudioRecorder.settings.outcome )
                 $(`[name=${AudioRecorder.settings.outcome}]`).val( "Failure" );
+            
             Swal.fire({
                 icon: 'error',
                 title: 'Recoverable Upload Error',
@@ -239,21 +258,26 @@ AudioRecorder.functions.upload = function() {
                 footer: footer,
                 allowOutsideClick: !AudioRecorder.settings.fallback
             });
+            
             AudioRecorder.functions.enableSaveButtons();
         },
         error: function(jqXHR, textStatus, errorMessage) {
             let footer = '';
             let text = 'Unable to upload recording to REDCap server.';
+            
             if ( AudioRecorder.errorEmail ) {
                 let msg = `user: ${$("#username-reference").text()}\ntime: ${(new Date()).toString()}\nurl: ${window.location.href}\nerror: ${JSON.stringify(errorMessage)}`;
                 sendSingleEmail(AudioRecorder.sendingEmail,AudioRecorder.errorEmail,'AudioRecorder - Failed to post file',msg);
             }
+            
             if ( AudioRecorder.settings.fallback ) {
                 footer = `<a href="${AudioRecorder.url}" download="${AudioRecorder.download}"><b>Download Recording</b></a>`;
                 text = text + ' It is strongly recommended that you download the recording below and report this incident to your REDCap administrator.';
             }
+            
             if ( AudioRecorder.settings.outcome )
                 $(`[name=${AudioRecorder.settings.outcome}]`).val( "Failure" );
+            
             Swal.fire({
                 icon: 'error',
                 title: 'Unrecoverable Upload Error',
@@ -276,6 +300,7 @@ AudioRecorder.functions.download = function() {
 AudioRecorder.functions.attachEvents = function() {
     if ( AudioRecorder.initAttach )
         return;
+    
     AudioRecorder.initAttach = true;
     $(AudioRecorder.settings.buttons.init).on('click', AudioRecorder.functions.init);
     $(AudioRecorder.settings.buttons.start).on('click', AudioRecorder.functions.start);
