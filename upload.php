@@ -1,4 +1,7 @@
 <?php
+
+use ExternalModules\ExternalModules;
+
 if (isset($_FILES['file'])) {
     $out = [
         "success" => false,
@@ -6,7 +9,7 @@ if (isset($_FILES['file'])) {
         "target" => $_POST['destination']
     ];
     
-    error_log("File ".$out["tmp"]." uploaded by Audio Recorder. Destination ".$out['target'], 0);
+    ExternalModules::errorLog("File ".$out["tmp"]." uploaded by Audio Recorder. Destination ".$out['target']);
     $dir = implode( DIRECTORY_SEPARATOR, array_slice( explode( DIRECTORY_SEPARATOR, $out['target'] ), 0, -1 ) );
     mkdir( $dir, 0777, true);
     
@@ -14,7 +17,8 @@ if (isset($_FILES['file'])) {
         $out["success"] = true;
     }
     else {
-        error_log("Error moving ".$out["tmp"], 0);
+        ExternalModules::errorLog("Error moving ".$out["tmp"]);
+        $out["note"] = "Failed to move temporary file to destination";
     }
     
     echo json_encode($out);
