@@ -95,6 +95,48 @@ class AudioRecorder extends AbstractExternalModule {
         $this->includeJs('recorder.js');
     }
     
+    public function upload() {
+        if (!isset($_FILES['file'])) {
+            echo json_encode([
+                "success" => false,
+                "note" => "No file receivied"
+            ]);
+            return;
+        }
+        
+        $out = [
+            "success" => false,
+            "tmp" => $_FILES['file']['tmp_name'],
+            "target" => $_POST['destination']
+        ];
+        
+        ExternalModules::errorLog("File ".$out["tmp"]." uploaded by Audio Recorder. Destination ".$out['target']);
+        $dir = implode( DIRECTORY_SEPARATOR, array_slice( explode( DIRECTORY_SEPARATOR, $out['target'] ), 0, -1 ) );
+        mkdir( $dir, 0777, true);
+        
+        if ( move_uploaded_file( $out["tmp"], $out['target'] ) ) {
+            $out["success"] = true;
+        }
+        else {
+            ExternalModules::errorLog("Error moving ".$out["tmp"]);
+            $out["note"] = "Failed to move temporary file to destination";
+        }
+        
+        echo json_encode($out);
+    }
+    
+    public function projectLog( $action, $changes, $record, $eventid, $pid ) {
+        // We expect all of these, just being safe.
+        $sql = NULL;
+        $action =  empty($action)  ? "No action logged" : $action;
+        $changes = empty($changes) ? NULL : $changes;
+        $record =  empty($record)  ? NULL : $record;
+        $eventid = empty($eventid) ? NULL : $eventid;
+        
+        REDCap::logEvent( $action , $changes, $sql, $record, $event, $pid);
+        echo "Action Logged";
+    }
+    
     private function initGlobal() {
         global $project_contact_email;
         global $from_email;
@@ -102,7 +144,8 @@ class AudioRecorder extends AbstractExternalModule {
             "errorEmail" => $this->getSystemSetting('error-email'),
             "sendingEmail" => $from_email ? $from_email : $project_contact_email,
             "modulePrefix" => $this->module_prefix,
-            "uploadPOST" => $this->getUrl('upload.php')
+            "uploadAjax" => $this->getUrl('upload.php'),
+            "logAjax" => $this->getUrl('log.php')
         );
         echo "<script>var ".$this->module_global." = ".json_encode($data).";</script>";
     }

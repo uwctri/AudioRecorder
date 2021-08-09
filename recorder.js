@@ -13,9 +13,29 @@ AudioRecorder.notifyTmp = {clickToHide:false,className:'success',position:'top c
 AudioRecorder.disableCalls = 0;
 
 AudioRecorder.functions.log = function(action, details) {
-    if (typeof ez !== "undefined") {
-        ez.log(action, details);
-    }
+    action = action || "";
+    details = details || "";
+    let record = getParameterByName('id');
+    let eventid = getParameterByName('event_id');
+    
+    if ( !record || !eventid ) 
+        return;
+    
+    $.ajax({
+        method: 'POST',
+        url: AudioRecorder.logAjax,
+        data: {
+            action: action,
+            changes: details,
+            record: record,
+            eventid: eventid,
+            pid: pid
+        },
+        error: (jqXHR, textStatus, errorThrown) => console.log(textStatus + " " + errorThrown),
+        success: (data) => {
+            console.log(data);
+        }
+    });
 }
 
 AudioRecorder.functions.mergeAudioStreams = function(desktopStream, voiceStream) {
@@ -218,7 +238,7 @@ AudioRecorder.functions.upload = function() {
     $(AudioRecorder.settings.buttons.upload).prop('disabled',true);
     $.ajax({
         type: 'POST',
-        url: AudioRecorder.uploadPOST,
+        url: AudioRecorder.uploadAjax,
         data: formData,
         contentType: false,
         processData: false,
