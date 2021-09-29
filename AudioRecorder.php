@@ -12,7 +12,6 @@ class AudioRecorder extends AbstractExternalModule {
     
     private $module_prefix = 'audio_recorder';
     private $module_global = 'AudioRecorder';
-    
     private $notifyJS = 'https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js';
     
     public function redcap_module_link_check_display($project_id, $link) {
@@ -125,41 +124,43 @@ class AudioRecorder extends AbstractExternalModule {
         echo json_encode($out);
     }
     
-    public function projectLog( $action, $changes, $record, $eventid, $pid ) {
-        // We expect all of these, just being safe.
+    public function projectLog() {
+        // We expect all of these to be set, just being safe.
         $sql = NULL;
-        $action =  empty($action)  ? "No action logged" : $action;
-        $changes = empty($changes) ? NULL : $changes;
-        $record =  empty($record)  ? NULL : $record;
-        $eventid = empty($eventid) ? NULL : $eventid;
+        $pid = $_POST['pid'];
+        $action =  empty($_POST['action'])  ? "No action logged" : $action;
+        $changes = empty($_POST['changes']) ? NULL : $changes;
+        $record =  empty($_POST['record'])  ? NULL : $record;
+        $eventid = empty($_POST['eventid']) ? NULL : $eventid;
         
         REDCap::logEvent( $action , $changes, $sql, $record, $event, $pid);
-        echo "Action Logged";
+        echo json_encode([
+            'text' => 'Action logged'
+        ]);
     }
     
     private function initGlobal() {
         global $project_contact_email;
         global $from_email;
-        $data = array(
+        $data = json_encode([
             "errorEmail" => $this->getSystemSetting('error-email'),
             "sendingEmail" => $from_email ? $from_email : $project_contact_email,
             "modulePrefix" => $this->module_prefix,
-            "uploadAjax" => $this->getUrl('upload.php'),
-            "logAjax" => $this->getUrl('log.php')
-        );
-        echo "<script>var ".$this->module_global." = ".json_encode($data).";</script>";
+            "router" => $this->getUrl('router.php')
+        ]);
+        echo "<script>var {$this->module_global} = {$data};</script>";
     }
     
     private function passArgument($name, $value) {
-        echo "<script>".$this->module_global.".".$name." = ".json_encode($value).";</script>";
+        echo "<script>{$this->module_global}.{$name} = ".json_encode($value).";</script>";
     }
     
     private function includeJs($path) {
-        echo '<script src="' . $this->getUrl($path) . '"></script>';
+        echo "<script src={$this->getUrl($path)}></script>";
     }
     
     private function includeNotifyJS() {
-        echo '<script src="' . $this->notifyJS . '"></script>';
+        echo "<script src={$this->notifyJS}></script>";
     }
     
     private function getPipingHelperButtons() {

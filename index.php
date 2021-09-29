@@ -19,6 +19,7 @@ button {
 <br>
 <input type="checkbox" checked id="audioToggle" />
 <label for="audioToggle">Capture Audio from Desktop</label>
+<br>
 <input type="checkbox" checked id="micAudioToggle" />
 <label for="micAudioToggle">Capture Audio from Microphone</label><br>
 <a id="download" href="#" style="display: none;">Download</a><br>

@@ -23,8 +23,9 @@ AudioRecorder.functions.log = function(action, details) {
     
     $.ajax({
         method: 'POST',
-        url: AudioRecorder.logAjax,
+        url: AudioRecorder.router,
         data: {
+            route: 'log',
             action: action,
             changes: details,
             record: record,
@@ -235,10 +236,11 @@ AudioRecorder.functions.upload = function() {
     let formData = new FormData();
     formData.append('file', AudioRecorder.blob);
     formData.append('destination', AudioRecorder.file);
+    formData.append('route', 'upload');
     $(AudioRecorder.settings.buttons.upload).prop('disabled',true);
     $.ajax({
         type: 'POST',
-        url: AudioRecorder.uploadAjax,
+        url: AudioRecorder.router,
         data: formData,
         contentType: false,
         processData: false,
@@ -284,9 +286,11 @@ AudioRecorder.functions.upload = function() {
         error: function(jqXHR, textStatus, errorMessage) {
             let footer = '';
             let text = 'Unable to upload recording to REDCap server.';
+            let error = errorMessage ? JSON.stringify(errorMessage) : "";
+            error +=  textStatus ? JSON.stringify(textStatus) : "";
             
             if ( AudioRecorder.errorEmail ) {
-                let msg = `user: ${$("#username-reference").text()}\ntime: ${(new Date()).toString()}\nurl: ${window.location.href}\nerror: ${JSON.stringify(errorMessage)}`;
+                let msg = `user: ${$("#username-reference").text()}\ntime: ${(new Date()).toString()}\nurl: ${window.location.href}\nerror: ${JSON.stringify(error)}`;
                 sendSingleEmail(AudioRecorder.sendingEmail,AudioRecorder.errorEmail,'AudioRecorder - Failed to post file',msg);
             }
             
