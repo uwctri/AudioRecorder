@@ -10,7 +10,14 @@ This EM isn't yet available to install via redcap's EM database so you'll need t
 
 ## Configuration
 
-Configuration is straight forward and requires specifying an instrument to use the module on and css selectors for various functions of the recorder. A typical two-button configuration would involve an "Initialize" button and a "Start / Stop & Upload" button. The destination location supports all expected smart variables. 
+Configuration is straight forward and requires specifying an instrument to use the module on and css selectors for various functions of the recorder. A typical two-button configuration would involve an "Initialize" button and a "Start / Stop & Upload" button. The destination location supports all expected smart variables. A typical three button layout may look like the following. In a descriptive feild use ...
+```
+<button id="initBtn">Initialize</button>
+<button id="startBtn">Start Recording</button>
+<button id="stopBtn">Stop Recording</button>
+```
+Now configure the EM as follows ...
+![](https://i.imgur.com/MUAVtIG.png)
 
 ## Call Outs
 
