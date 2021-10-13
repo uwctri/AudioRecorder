@@ -38,7 +38,7 @@
         },
         {
             "key": "show-em-link",
-            "name": "<b>Show 'Audio Recoder' EM link</b>",
+            "name": "<b>Show 'Audio Recoder' Demo Page link</b>",
             "type": "checkbox"
         },
         {
@@ -54,13 +54,13 @@
             "sub_settings":[
                 {
                     "key": "instrument",
-                    "name": "<b>Instrument</b><br>Forms to show the recorder on",
+                    "name": "<b>Instrument</b><br>Forms to enable the recorder on",
                     "type": "form-list",
                     "repeatable": true
                 },
                 {
                     "key": "desktop",
-                    "name": "<b>Record Desktop Audio</b>",
+                    "name": "<b>Record Desktop Audio</b><br>Useful to capture VOIP calls or meetings",
                     "type": "checkbox"
                 },
                 {
