@@ -6,13 +6,15 @@ AudioRecorder allows for audio capture of the PC's microphone and audio-out. It 
 
 ## Installing
 
-This EM isn't yet available to install via redcap's EM database so you'll need to install to your modules folder (i.e. `redcap/modules/\audio_recorder_v1.0.0`) manually.
+This EM isn't yet available to install via redcap's EM database so you'll need to install to your modules folder (i.e. `redcap/modules/audio_recorder_v1.0.0`) manually.
 
 ## Configuration
 
 Configuration is straight forward and requires specifying an instrument to use the module on and css selectors for various functions of the recorder. A typical two-button configuration would involve an "Initialize" button and a "Start / Stop & Upload" button. The destination location supports all expected smart variables. 
 
 ## Call Outs
+
+* Some end-users experience issues if they quickly toggle recording on/off due to a known race condition. This will be corrected in a future release. 
 
 * Due to limitations in the js implementation of `mediaDevices.getDisplayMedia` in some browsers only chrome and chrome-derivatives are supported. Errors exist to inform end-users of this.
 
