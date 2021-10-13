@@ -30,6 +30,9 @@ $(document).ready(function() {
                     $(this).find('input').addClass("mt-1");
                 }
             });
+            
+            // Hide poorly formatted #
+            $("tr[field=fallback], tr[field=suppress-start-error], tr[field=outcome]").find('.external-modules-instance-label').text('');
         };
     });
 
