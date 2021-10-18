@@ -9,8 +9,6 @@ use Piping;
 use RCView;
 
 class AudioRecorder extends AbstractExternalModule {
-    
-    private $module_prefix = 'audio_recorder';
     private $module_global = 'AudioRecorder';
     private $notifyJS = 'https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js';
     
@@ -21,7 +19,7 @@ class AudioRecorder extends AbstractExternalModule {
     public function redcap_every_page_top($project_id) {
         
         // Demo Page
-        if ( $_GET['prefix'] == $this->module_prefix && $_GET['page'] == 'index') {
+        if ( $_GET['prefix'] == $this->PREFIX && $_GET['page'] == 'index') {
             $this->initGlobal();
             $settings = [
                 'email' => $this->getProjectSetting('email'),
@@ -145,7 +143,7 @@ class AudioRecorder extends AbstractExternalModule {
         $data = json_encode([
             "errorEmail" => $this->getSystemSetting('error-email'),
             "sendingEmail" => $from_email ? $from_email : $project_contact_email,
-            "modulePrefix" => $this->module_prefix,
+            "modulePrefix" => $this->PREFIX,
             "router" => $this->getUrl('router.php')
         ]);
         echo "<script>var {$this->module_global} = {$data};</script>";
