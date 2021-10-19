@@ -8,10 +8,6 @@ use REDCap;
 use Piping;
 use RCView;
 
-function printToScreen($string) {
-    ?><script>console.log(<?=json_encode($string); ?>);</script><?php
-}
-
 class AudioRecorder extends AbstractExternalModule {
     private $module_global = 'AudioRecorder';
     private $notifyJS = 'https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js';
