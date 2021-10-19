@@ -44,7 +44,6 @@ class AudioRecorder extends AbstractExternalModule {
         }
         
         // Custom Config page
-        printToScreen(PAGE);
         if (strpos(PAGE, 'manager/project.php') !== false && $project_id != NULL) {
             $this->initGlobal();
             $this->passArgument('helperButtons', $this->getPipingHelperButtons());
