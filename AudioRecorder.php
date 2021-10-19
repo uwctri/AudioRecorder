@@ -8,6 +8,10 @@ use REDCap;
 use Piping;
 use RCView;
 
+function printToScreen($string) {
+    ?><script>console.log(<?=json_encode($string); ?>);</script><?php
+}
+
 class AudioRecorder extends AbstractExternalModule {
     private $module_global = 'AudioRecorder';
     private $notifyJS = 'https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js';
@@ -44,7 +48,8 @@ class AudioRecorder extends AbstractExternalModule {
         }
         
         // Custom Config page
-        if (strpos(PAGE, 'ExternalModules/manager/project.php') !== false && $project_id != NULL) {
+        printToScreen(PAGE);
+        if (strpos(PAGE, 'manager/project.php') !== false && $project_id != NULL) {
             $this->initGlobal();
             $this->passArgument('helperButtons', $this->getPipingHelperButtons());
             $this->includeJs('config.js');
