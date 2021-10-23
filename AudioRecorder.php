@@ -9,8 +9,8 @@ use Piping;
 use RCView;
 
 class AudioRecorder extends AbstractExternalModule {
+    
     private $module_global = 'AudioRecorder';
-    private $notifyJS = 'https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js';
     
     public function redcap_module_link_check_display($project_id, $link) {
         return $this->getProjectSetting('show-em-link');
@@ -39,7 +39,6 @@ class AudioRecorder extends AbstractExternalModule {
                 ]
             ];
             $this->passArgument('settings',$settings);
-            $this->includeNotifyJS();
             $this->includeJs('recorder.js');
         }
         
@@ -88,7 +87,6 @@ class AudioRecorder extends AbstractExternalModule {
             ]
         ];
         $this->passArgument('settings',$settings);
-        $this->includeNotifyJS();
         $this->includeJs('recorder.js');
     }
     
@@ -123,15 +121,11 @@ class AudioRecorder extends AbstractExternalModule {
     }
     
     public function projectLog() {
-        // We expect all of these to be set, just being safe.
         $sql = NULL;
-        $pid = $_POST['pid'];
-        $action =  empty($_POST['action'])  ? "No action logged" : $action;
-        $changes = empty($_POST['changes']) ? NULL : $changes;
-        $record =  empty($_POST['record'])  ? NULL : $record;
-        $eventid = empty($_POST['eventid']) ? NULL : $eventid;
+        $action = 'Audio Recorder';
+        $changes =  $_POST['changes']  ?? "No action logged";
         
-        REDCap::logEvent( $action , $changes, $sql, $record, $event, $pid);
+        REDCap::logEvent( $action , $changes, $sql, $_GET['record'], $_GET['eventid'], $_GET['pid']);
         echo json_encode([
             'text' => 'Action logged'
         ]);
@@ -155,10 +149,6 @@ class AudioRecorder extends AbstractExternalModule {
     
     private function includeJs($path) {
         echo "<script src={$this->getUrl($path)}></script>";
-    }
-    
-    private function includeNotifyJS() {
-        echo "<script src={$this->notifyJS}></script>";
     }
     
     private function getPipingHelperButtons() {

@@ -1,4 +1,4 @@
-AudioRecorder.functions = {};
+AudioRecorder.fn = {};
 AudioRecorder.isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor) && (navigator.userAgent.split('Chrome/')[1].split('.')[0] >= 74);
 AudioRecorder.initFailure = false;
 AudioRecorder.initSuccess = false;
@@ -8,12 +8,17 @@ AudioRecorder.showInitError = true;
 AudioRecorder.isSaved = true;
 AudioRecorder.extention = 'webm';
 AudioRecorder.codecs = 'opus';
-AudioRecorder.notifyStay = {clickToHide:false,autoHide:false,className:'info',position:'top center'};
-AudioRecorder.notifyTmp = {clickToHide:false,className:'success',position:'top center'};
 AudioRecorder.disableCalls = 0;
 
-AudioRecorder.functions.log = function(action, details) {
-    action = action || "";
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-right',
+    showConfirmButton: false,
+    timer: 5000,
+    timerProgressBar: true,
+});
+
+AudioRecorder.fn.log = function(details) {
     details = details || "";
     let record = getParameterByName('id');
     let eventid = getParameterByName('event_id');
@@ -26,11 +31,9 @@ AudioRecorder.functions.log = function(action, details) {
         url: AudioRecorder.router,
         data: {
             route: 'log',
-            action: action,
             changes: details,
             record: record,
             eventid: eventid,
-            pid: pid
         },
         error: (jqXHR, textStatus, errorThrown) => console.log(textStatus + " " + errorThrown),
         success: (data) => {
@@ -39,7 +42,7 @@ AudioRecorder.functions.log = function(action, details) {
     });
 }
 
-AudioRecorder.functions.mergeAudioStreams = function(desktopStream, voiceStream) {
+AudioRecorder.fn.mergeAudioStreams = function(desktopStream, voiceStream) {
     const context = new AudioContext();
     const destination = context.createMediaStreamDestination();
     let hasDesktop = false;
@@ -65,7 +68,7 @@ AudioRecorder.functions.mergeAudioStreams = function(desktopStream, voiceStream)
     return hasDesktop || hasVoice ? destination.stream.getAudioTracks() : [];
 };
 
-AudioRecorder.functions.permissionFailure = function() {
+AudioRecorder.fn.permissionFailure = function() {
     AudioRecorder.initFailure = true;
     
     Swal.fire({
@@ -77,20 +80,20 @@ AudioRecorder.functions.permissionFailure = function() {
     });
 }
 
-AudioRecorder.functions.pipe = function(base) {
+AudioRecorder.fn.pipe = function(base) {
     let timestamp = formatDate(new Date(),'yMMdd_HHmmss');
     return base.replace(/\[timestamp\]/g,timestamp);
 }
 
-AudioRecorder.functions.onBeforeUnload = function() {
+AudioRecorder.fn.onBeforeUnload = function() {
     if ( !AudioRecorder.isSaved )
         return false;
     
-    if ( AudioRecorder.functions.oldUnload != null )
-        return AudioRecorder.functions.oldUnload();
+    if ( AudioRecorder.fn.oldUnload != null )
+        return AudioRecorder.fn.oldUnload();
 }
 
-AudioRecorder.functions.init = async function() {
+AudioRecorder.fn.init = async function() {
     if ( !AudioRecorder.isChrome ) {
         Swal.fire({
             icon: 'error',
@@ -125,16 +128,16 @@ AudioRecorder.functions.init = async function() {
             });
         }
     } catch (e) {
-        AudioRecorder.functions.permissionFailure();
+        AudioRecorder.fn.permissionFailure();
     }
     
     if ( AudioRecorder.settings.recording.desktop && AudioRecorder.desktopStream.getAudioTracks().length < 1 ) {
-        AudioRecorder.functions.permissionFailure();
+        AudioRecorder.fn.permissionFailure();
         return;
     }
     
     let tracks = [
-        ...AudioRecorder.functions.mergeAudioStreams(AudioRecorder.desktopStream, AudioRecorder.voiceStream)
+        ...AudioRecorder.fn.mergeAudioStreams(AudioRecorder.desktopStream, AudioRecorder.voiceStream)
     ];
     AudioRecorder.stream = new MediaStream(tracks);
     AudioRecorder.blobs = [];
@@ -148,7 +151,7 @@ AudioRecorder.functions.init = async function() {
             type: "audio/"+AudioRecorder.extention
         });
         AudioRecorder.url = window.URL.createObjectURL(AudioRecorder.blob);
-        AudioRecorder.file = AudioRecorder.functions.pipe(AudioRecorder.settings.destination)+'.'+AudioRecorder.extention;
+        AudioRecorder.file = AudioRecorder.fn.pipe(AudioRecorder.settings.destination)+'.'+AudioRecorder.extention;
         AudioRecorder.download = AudioRecorder.file.includes(':\\') ? AudioRecorder.file.split('\\').pop() : AudioRecorder.file.split('/').pop();
         if ( AudioRecorder.settings.buttons.download )
             $(AudioRecorder.settings.buttons.download).prop('href',AudioRecorder.url).prop('download',download).prop('disabled',false);
@@ -158,13 +161,16 @@ AudioRecorder.functions.init = async function() {
     if (!AudioRecorder.initFailure) {
         $(AudioRecorder.settings.buttons.start).prop('disabled',false);
         $(AudioRecorder.settings.buttons.init).prop('disabled',true);
-        $.notify("Recording Initalized!",AudioRecorder.notifyTmp);
+        Toast.fire({
+            icon: 'success',
+            title: 'Recording Initalized!'
+        });
         AudioRecorder.initSuccess = true;
-        AudioRecorder.functions.log('Audio Recorder', 'Initalized');
+        AudioRecorder.fn.log('Initalized');
     }
 }
 
-AudioRecorder.functions.start = function() {
+AudioRecorder.fn.start = function() {
     if ( AudioRecorder.isRecording || !(AudioRecorder.settings.recording.desktop || AudioRecorder.settings.recording.mic) )
         return;
     
@@ -188,13 +194,17 @@ AudioRecorder.functions.start = function() {
     
     try {
         AudioRecorder.rec.start();
-        AudioRecorder.functions.disableSaveButtons('recording audio');
-        $.notify("Recording Audio",AudioRecorder.notifyStay);
+        AudioRecorder.fn.disableSaveButtons('recording audio');
+        AudioRecorder.toast = Toast.fire({
+            icon: 'info',
+            title: 'Recording Audio',
+            timer: 0
+        });
         
         //Record atleast 1 second of audio before allowing a stop
         setTimeout( function() { AudioRecorder.isRecording = true; }, 1000);
         
-        AudioRecorder.functions.log('Audio Recorder', 'Recording Started');
+        AudioRecorder.fn.log('Recording Started');
     } catch (e) {
         if ( AudioRecorder.settings.noStartError )
             return;
@@ -206,7 +216,7 @@ AudioRecorder.functions.start = function() {
     }
 }
 
-AudioRecorder.functions.stop = function() {
+AudioRecorder.fn.stop = function() {
     if ( !AudioRecorder.isRecording )
         return;
     
@@ -214,24 +224,24 @@ AudioRecorder.functions.stop = function() {
     $(AudioRecorder.settings.buttons.init).prop('disabled',false);
     $(AudioRecorder.settings.buttons.start).prop('disabled',true);
     $(AudioRecorder.settings.buttons.stop).prop('disabled',true);
-    AudioRecorder.functions.enableSaveButtons();
+    AudioRecorder.fn.enableSaveButtons();
     
     AudioRecorder.rec.stop();
-    $(".notifyjs-wrapper").slideUp("normal", function() { $(this).remove(); } );
-    AudioRecorder.functions.log('Audio Recorder', 'Recording Stoped');
+    AudioRecorder.toast.close();
+    AudioRecorder.fn.log('Recording Stoped');
 }
 
-AudioRecorder.functions.upload = function() {
+AudioRecorder.fn.upload = function() {
     if ( AudioRecorder.isRecording )
         return;
     
     // Nothing recorded yet, blob is only set on stop
     if ( AudioRecorder.blob == null ) {
-        setTimeout(AudioRecorder.functions.upload, 250);
+        setTimeout(AudioRecorder.fn.upload, 250);
         return;
     }
     
-    AudioRecorder.functions.disableSaveButtons('uploading audio');
+    AudioRecorder.fn.disableSaveButtons('uploading audio');
     AudioRecorder.isSaved = true;
     let formData = new FormData();
     formData.append('file', AudioRecorder.blob);
@@ -249,11 +259,15 @@ AudioRecorder.functions.upload = function() {
             console.log(data);
             
             if ( data.success ) {
-                $.notify("Recording Successfully Uploaded!", AudioRecorder.notifyTmp);
-                AudioRecorder.functions.log('Audio Recorder', 'Recording Uploaded:\n'+AudioRecorder.download);
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Recording Successfully Uploaded!'
+                });
+                
+                AudioRecorder.fn.log('Recording Uploaded:\n'+AudioRecorder.download);
                 if ( AudioRecorder.settings.outcome )
                     $(`[name=${AudioRecorder.settings.outcome}]`).val( formatDate(new Date(),'MM-dd-y hh:mma').toLowerCase() );
-                AudioRecorder.functions.enableSaveButtons();
+                AudioRecorder.fn.enableSaveButtons();
                 return;
             }
             
@@ -281,7 +295,7 @@ AudioRecorder.functions.upload = function() {
                 allowOutsideClick: !AudioRecorder.settings.fallback
             });
             
-            AudioRecorder.functions.enableSaveButtons();
+            AudioRecorder.fn.enableSaveButtons();
         },
         error: function(jqXHR, textStatus, errorMessage) {
             let footer = '';
@@ -309,33 +323,33 @@ AudioRecorder.functions.upload = function() {
                 footer: footer,
                 allowOutsideClick: !AudioRecorder.settings.fallback
             });
-            AudioRecorder.functions.enableSaveButtons();
+            AudioRecorder.fn.enableSaveButtons();
         }
     });
 }
 
-AudioRecorder.functions.download = function() {
+AudioRecorder.fn.download = function() {
     let link = $(AudioRecorder.settings.buttons.download).prop('href');
     if ( AudioRecorder.isRecording || !link || link == '#' )
         return
     AudioRecorder.isSaved = true;
 }
 
-AudioRecorder.functions.attachEvents = function() {
+AudioRecorder.fn.attachEvents = function() {
     if ( AudioRecorder.initAttach )
         return;
     
     AudioRecorder.initAttach = true;
-    $(AudioRecorder.settings.buttons.init).on('click', AudioRecorder.functions.init);
-    $(AudioRecorder.settings.buttons.start).on('click', AudioRecorder.functions.start);
-    $(AudioRecorder.settings.buttons.stop).on('click', AudioRecorder.functions.stop);
-    $(AudioRecorder.settings.buttons.upload).on('click', AudioRecorder.functions.upload);
-    $(AudioRecorder.settings.buttons.download).on('click', AudioRecorder.functions.download);
-    AudioRecorder.functions.oldUnload = window.onbeforeunload;
-    window.onbeforeunload = AudioRecorder.functions.onBeforeUnload;
+    $(AudioRecorder.settings.buttons.init).on('click', AudioRecorder.fn.init);
+    $(AudioRecorder.settings.buttons.start).on('click', AudioRecorder.fn.start);
+    $(AudioRecorder.settings.buttons.stop).on('click', AudioRecorder.fn.stop);
+    $(AudioRecorder.settings.buttons.upload).on('click', AudioRecorder.fn.upload);
+    $(AudioRecorder.settings.buttons.download).on('click', AudioRecorder.fn.download);
+    AudioRecorder.fn.oldUnload = window.onbeforeunload;
+    window.onbeforeunload = AudioRecorder.fn.onBeforeUnload;
 }
 
-AudioRecorder.functions.enableSaveButtons = function() {
+AudioRecorder.fn.enableSaveButtons = function() {
     AudioRecorder.disableCalls += AudioRecorder.disableCalls > 0 ? -1 : 0;
     setTimeout( function() {
         if ( AudioRecorder.disableCalls == 0 ) {
@@ -346,7 +360,7 @@ AudioRecorder.functions.enableSaveButtons = function() {
     }, 500);
 }
 
-AudioRecorder.functions.disableSaveButtons = function(displayText) {
+AudioRecorder.fn.disableSaveButtons = function(displayText) {
     AudioRecorder.disableCalls++;
     $("#__SUBMITBUTTONS__-tr button").css('pointer-events', 'none').addClass('disabled');
     if ( $(".tmpDisableSave").length == 0 )
@@ -371,10 +385,10 @@ $(document).ready(function () {
         Shazam.beforeDisplayCallback = function () {
             if (typeof oldCallback == "function") 
                 oldCallback();
-            AudioRecorder.functions.attachEvents();
+            AudioRecorder.fn.attachEvents();
         }
-        setTimeout(AudioRecorder.functions.attachEvents, 2000);
+        setTimeout(AudioRecorder.fn.attachEvents, 2000);
     }
     else 
-        AudioRecorder.functions.attachEvents();
+        AudioRecorder.fn.attachEvents();
 });
