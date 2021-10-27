@@ -390,5 +390,5 @@ $(document).ready(function() {
         setTimeout(AudioRecorder.fn.attachEvents, 2000);
     } else {
         AudioRecorder.fn.attachEvents();
-    ]
+    }
 });
