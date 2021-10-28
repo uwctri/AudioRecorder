@@ -271,6 +271,7 @@ AudioRecorder.fn.upload = function() {
                 return;
             }
 
+            AudioRecorder.fn.log('Error Uploading File');
             let footer = '';
             let text = 'Issue uploading recording to REDCap server.';
             if (AudioRecorder.errorEmail) {
