@@ -35,7 +35,7 @@ AudioRecorder.fn.log = function(details) {
             record: record,
             eventid: eventid,
         },
-        error: (jqXHR, textStatus, errorThrown) => console.log(textStatus + " " + errorThrown),
+        error: (jqXHR, textStatus, errorThrown) => console.log(`${jqXHR}\n${textStatus}\n${errorThrown}`)
         success: (data) => {
             console.log(data);
         }
