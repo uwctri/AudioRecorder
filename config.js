@@ -15,7 +15,6 @@ $(document).ready(function() {
             if ($modal.data('module') !== AudioRecorder.modulePrefix)
                 return;
             
-            $modal.addClass('AudioRecorderConfig');
             $modal.find('thead').remove();
             
             // Make URL wide
@@ -43,7 +42,5 @@ $(document).ready(function() {
         
         if (typeof ExternalModules.Settings.prototype.resetConfigInstancesOld !== 'undefined')
             ExternalModules.Settings.prototype.resetConfigInstances = ExternalModules.Settings.prototype.resetConfigInstancesOld;
-
-        $modal.removeClass('AudioRecorderConfig');
     });
 });

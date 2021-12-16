@@ -21,6 +21,8 @@ Now configure the EM as follows ...
 
 ## Call Outs
 
+* Feature Request - Show audio levels in the Toast pop-up. This would be a good indicator that the user's mic is working as expected and that they are capturing both audio streams as they expect.
+
 * Some end-users experience issues if they quickly toggle recording on/off due to a known race condition. This will be corrected in a future release. 
 
 * Due to limitations in the js implementation of `mediaDevices.getDisplayMedia` in some browsers only chrome and chrome-derivatives are supported. Errors exist to inform end-users of this.

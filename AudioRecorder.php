@@ -26,7 +26,7 @@ class AudioRecorder extends AbstractExternalModule {
     public function redcap_every_page_top($project_id) {
         
         // Audio Reocorder Testing / Demo page
-        if ( $_GET['prefix'] == $this->PREFIX && $_GET['page'] == 'index') {
+        if ( $_GET['prefix'] == $this->getPrefix() && $_GET['page'] == 'index') {
             $this->initGlobal();
             $settings = [
                 'email' => $this->getProjectSetting('email'),
@@ -50,7 +50,7 @@ class AudioRecorder extends AbstractExternalModule {
         }
         
         // Custom Config page
-        if (strpos(PAGE, 'manager/project.php') !== false && $project_id != NULL) {
+        if ( $this->isPage('ExternalModules/manager/project.php') && $project_id != NULL) {
             $this->initGlobal();
             $this->passArgument('helperButtons', $this->getPipingHelperButtons());
             $this->includeJs('config.js');
@@ -174,7 +174,7 @@ class AudioRecorder extends AbstractExternalModule {
         $data = json_encode([
             "errorEmail" => $this->getSystemSetting('error-email'),
             "sendingEmail" => $from_email ? $from_email : $project_contact_email,
-            "modulePrefix" => $this->PREFIX,
+            "modulePrefix" => $this->getPrefix(),
             "router" => $this->getUrl('router.php')
         ]);
         echo "<script>var {$this->module_global} = {$data};</script>";

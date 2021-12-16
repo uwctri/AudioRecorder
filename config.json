@@ -13,7 +13,7 @@
         "redcap_every_page_top",
         "redcap_data_entry_form"
     ],
-    "framework-version": 5,
+    "framework-version": 8,
     "system-settings": [
         {
             "key": "error-email",
