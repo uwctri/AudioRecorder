@@ -34,6 +34,7 @@ AudioRecorder.fn.log = function(details) {
             changes: details,
             record: record,
             eventid: eventid,
+            redcap_csrf_token: AudioRecorder.csrf
         },
         error: (jqXHR, textStatus, errorThrown) => console.log(`${jqXHR}\n${textStatus}\n${errorThrown}`),
         success: (data) => console.log(data)
@@ -245,6 +246,7 @@ AudioRecorder.fn.upload = function() {
     formData.append('file', AudioRecorder.blob);
     formData.append('destination', AudioRecorder.file);
     formData.append('route', 'upload');
+    formData.append('redcap_csrf_token', AudioRecorder.csrf);
     $(AudioRecorder.settings.buttons.upload).prop('disabled', true);
     $.ajax({
         type: 'POST',

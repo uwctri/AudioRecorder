@@ -172,6 +172,7 @@ class AudioRecorder extends AbstractExternalModule {
         global $project_contact_email;
         global $from_email;
         $data = json_encode([
+            "csrf" => $this->getCSRFToken(),
             "errorEmail" => $this->getSystemSetting('error-email'),
             "sendingEmail" => $from_email ? $from_email : $project_contact_email,
             "modulePrefix" => $this->getPrefix(),
