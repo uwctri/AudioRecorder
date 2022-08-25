@@ -2,7 +2,7 @@
 
 ## What does it do?
 
-AudioRecorder allows for audio capture of the PC's microphone and audio-out. It was originally created to easily capture VOIP calls for later review as apart of a redcap study.
+AudioRecorder allows for audio capture of the PC's microphone and audio-out, users can upload the recording to the Redcap web server or download it to their local machine. This EM was originally created to easily capture VOIP calls for later review as apart of a clinical study.
 
 ## Installing
 
