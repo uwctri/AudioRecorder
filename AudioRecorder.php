@@ -8,6 +8,7 @@ use ExternalModules\ExternalModules;
 use REDCap;
 use Piping;
 use RCView;
+use RestUtility;
 
 class AudioRecorder extends AbstractExternalModule
 {
@@ -117,6 +118,23 @@ class AudioRecorder extends AbstractExternalModule
     }
 
     /*
+    Process a post request from API or router
+    */
+    public function process()
+    {
+        $request = RestUtility::processRequest(false);
+        $params = $request->getRequestVars();
+
+        if ($params['route'] == "upload") {
+            return $this->upload();
+        }
+
+        if ($params['route'] == "log") {
+            return $this->projectLog();
+        }
+    }
+
+    /*
     Uploads an audio recording to the redcap server and moves the file to
     the target destination. Invoked via router/ajax
     */
@@ -133,26 +151,26 @@ class AudioRecorder extends AbstractExternalModule
         }
 
         // Prep the return object
-        $out = [
+        $result = [
             "success" => false,
             "tmp" => $_FILES['file']['tmp_name'],
             "target" => $_POST['destination']
         ];
 
         // Log to PHP what we are doing. If there is an issue an Admin might need to recover the file
-        ExternalModules::errorLog("File " . $out["tmp"] . " uploaded by Audio Recorder. Destination " . $out['target']);
-        $dir = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPARATOR, $out['target']), 0, -1));
+        ExternalModules::errorLog("File " . $result["tmp"] . " uploaded by Audio Recorder. Destination " . $result['target']);
+        $dir = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPARATOR, $result['target']), 0, -1));
         mkdir($dir, 0777, true);
 
         // Attempt move, log any error
-        if (move_uploaded_file($out["tmp"], $out['target'])) {
-            $out["success"] = true;
+        if (move_uploaded_file($result["tmp"], $result['target'])) {
+            $result["success"] = true;
         } else {
-            ExternalModules::errorLog("Error moving " . $out["tmp"]);
-            $out["note"] = "Failed to move temporary file to destination";
+            ExternalModules::errorLog("Error moving " . $result["tmp"]);
+            $result["note"] = "Failed to move temporary file to destination";
         }
 
-        echo json_encode($out);
+        return json_encode($result);
     }
 
     /*
@@ -166,7 +184,7 @@ class AudioRecorder extends AbstractExternalModule
         $changes =  $_POST['changes'] ?? "No action logged";
 
         REDCap::logEvent($action, $changes, $sql, $_POST['record'], $_POST['eventid'], $_GET['pid']);
-        echo json_encode([
+        return json_encode([
             'text' => 'Action logged'
         ]);
     }
@@ -177,8 +195,7 @@ class AudioRecorder extends AbstractExternalModule
     */
     private function initGlobal()
     {
-        global $project_contact_email;
-        global $from_email;
+        global $project_contact_email, $from_email;
         $data = json_encode([
             "csrf" => $this->getCSRFToken(),
             "errorEmail" => $this->getSystemSetting('error-email'),

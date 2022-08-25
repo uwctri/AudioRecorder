@@ -255,7 +255,6 @@ AudioRecorder.fn.upload = () => {
         contentType: false,
         processData: false,
         success: (data) => {
-            data = JSON.parse(data);
             console.log(data);
 
             if (data.success) {
