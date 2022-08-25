@@ -5,10 +5,10 @@ require_once APP_PATH_DOCROOT . 'ProjectGeneral/header.php';
 ?>
 
 <style>
-button {
-  margin: 1em;
-  padding: 1em;
-}
+    button {
+        margin: 1em;
+        padding: 1em;
+    }
 </style>
 
 <div class="projhdr"><i class="fas fa-microphone"></i> Audio Recorder</div>
@@ -26,23 +26,22 @@ button {
 <a id="upload" href="#" style="display: none;">Upload to Server</a>
 
 <script>
-    $("#audioToggle, #micAudioToggle").on('click', function () {
-        $("#initBtn").prop('disabled', !$("#audioToggle, #micAudioToggle").is(":checked") );
+    $("#audioToggle, #micAudioToggle").on('click', function() {
+        $("#initBtn").prop('disabled', !$("#audioToggle, #micAudioToggle").is(":checked"));
         AudioRecorder.settings.recording.desktop = $("#audioToggle").is(":checked");
         AudioRecorder.settings.recording.mic = $("#micAudioToggle").is(":checked");
     });
     $("#initBtn").on('click', function() {
-        $("#audioToggle, #micAudioToggle").prop('disabled',true);
+        $("#audioToggle, #micAudioToggle").prop('disabled', true);
         $("#download, #upload").hide();
     });
     $("#stopBtn").on('click', function() {
-        $("#audioToggle, #micAudioToggle").prop('disabled',false);
+        $("#audioToggle, #micAudioToggle").prop('disabled', false);
         $("#download, #upload").show();
     });
     $("#upload").on('click', function() {
         $("#upload").hide();
     });
-    
 </script>
 
 <?php

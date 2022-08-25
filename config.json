@@ -50,8 +50,8 @@
             "key": "recorder-instance",
             "name": "<b>Audio Recorder</b>",
             "type": "sub_settings",
-            "repeatable":true,
-            "sub_settings":[
+            "repeatable": true,
+            "sub_settings": [
                 {
                     "key": "instrument",
                     "name": "<b>Instrument</b><br>Forms to enable the recorder on",
