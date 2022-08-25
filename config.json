@@ -109,8 +109,13 @@
                     "type": "checkbox"
                 },
                 {
-                    "key": "outcome",
-                    "name": "<b>Record Outcome</b><br>A text field on the instrument will be populated with the date time (d/m/y h:m) of succesfull upload or the text 'Failure'",
+                    "key": "upload-time",
+                    "name": "<b>Upload Time</b><br>A text field on the instrument will be populated with the date time of succesfull upload",
+                    "type": "field-list"
+                },
+                {
+                    "key": "file-name",
+                    "name": "<b>Saved File Name</b><br>A text field on the instrument will be populated with the file name on succesfull upload",
                     "type": "field-list"
                 }
             ]

@@ -18,7 +18,7 @@ const Toast = Swal.mixin({
     timerProgressBar: true,
 });
 
-AudioRecorder.fn.log = function (details) {
+AudioRecorder.fn.log = (details) => {
     details = details || "";
     let record = getParameterByName('id');
     let eventid = getParameterByName('event_id');
@@ -41,7 +41,7 @@ AudioRecorder.fn.log = function (details) {
     });
 }
 
-AudioRecorder.fn.mergeAudioStreams = function (desktopStream, voiceStream) {
+AudioRecorder.fn.mergeAudioStreams = (desktopStream, voiceStream) => {
     const context = new AudioContext();
     const destination = context.createMediaStreamDestination();
     let hasDesktop = false;
@@ -67,7 +67,7 @@ AudioRecorder.fn.mergeAudioStreams = function (desktopStream, voiceStream) {
     return hasDesktop || hasVoice ? destination.stream.getAudioTracks() : [];
 };
 
-AudioRecorder.fn.permissionFailure = function () {
+AudioRecorder.fn.permissionFailure = () => {
     AudioRecorder.initFailure = true;
 
     Swal.fire({
@@ -79,12 +79,12 @@ AudioRecorder.fn.permissionFailure = function () {
     });
 }
 
-AudioRecorder.fn.pipe = function (base) {
+AudioRecorder.fn.pipe = (base) => {
     let timestamp = formatDate(new Date(), 'yMMdd_HHmmss');
     return base.replace(/\[timestamp\]/g, timestamp);
 }
 
-AudioRecorder.fn.onBeforeUnload = function () {
+AudioRecorder.fn.onBeforeUnload = () => {
     if (!AudioRecorder.isSaved)
         return false;
 
@@ -92,7 +92,7 @@ AudioRecorder.fn.onBeforeUnload = function () {
         return AudioRecorder.fn.oldUnload();
 }
 
-AudioRecorder.fn.init = async function () {
+AudioRecorder.fn.init = async () => {
     if (!AudioRecorder.isChrome) {
         Swal.fire({
             icon: 'error',
@@ -169,7 +169,7 @@ AudioRecorder.fn.init = async function () {
     AudioRecorder.fn.log('Initalized');
 }
 
-AudioRecorder.fn.start = function () {
+AudioRecorder.fn.start = () => {
     if (AudioRecorder.isRecording || !(AudioRecorder.settings.recording.desktop || AudioRecorder.settings.recording.mic))
         return;
 
@@ -201,7 +201,7 @@ AudioRecorder.fn.start = function () {
         });
 
         //Record atleast 1 second of audio before allowing a stop
-        setTimeout(function () { AudioRecorder.isRecording = true; }, 1000);
+        setTimeout(() => { AudioRecorder.isRecording = true; }, 1000);
 
         AudioRecorder.fn.log('Recording Started');
     } catch (e) {
@@ -215,7 +215,7 @@ AudioRecorder.fn.start = function () {
     }
 }
 
-AudioRecorder.fn.stop = function () {
+AudioRecorder.fn.stop = () => {
     if (!AudioRecorder.isRecording)
         return;
 
@@ -230,7 +230,7 @@ AudioRecorder.fn.stop = function () {
     AudioRecorder.fn.log('Recording Stoped');
 }
 
-AudioRecorder.fn.upload = function () {
+AudioRecorder.fn.upload = () => {
     if (AudioRecorder.isRecording)
         return;
 
@@ -254,7 +254,7 @@ AudioRecorder.fn.upload = function () {
         data: formData,
         contentType: false,
         processData: false,
-        success: function (data) {
+        success: (data) => {
             data = JSON.parse(data);
             console.log(data);
 
@@ -265,8 +265,10 @@ AudioRecorder.fn.upload = function () {
                 });
 
                 AudioRecorder.fn.log('Recording Uploaded:\n' + AudioRecorder.download);
-                if (AudioRecorder.settings.outcome)
-                    $(`[name=${AudioRecorder.settings.outcome}]`).val(formatDate(new Date(), 'MM-dd-y hh:mma').toLowerCase());
+                if (AudioRecorder.settings.uploadTime)
+                    $(`[name=${AudioRecorder.settings.uploadTime}]`).val(formatDate(new Date(), 'y-MM-dd HH:mm'));
+                if (AudioRecorder.settings.fileName)
+                    $(`[name=${AudioRecorder.settings.fileName}]`).val(AudioRecorder.file.split(/\\|\//).slice(-1)[0]);
                 AudioRecorder.fn.enableSaveButtons();
                 return;
             }
@@ -285,8 +287,10 @@ AudioRecorder.fn.upload = function () {
                 text = text + ' It is strongly recommended that you download the recording below.';
             }
 
-            if (AudioRecorder.settings.outcome)
-                $(`[name=${AudioRecorder.settings.outcome}]`).val("Failure");
+            if (AudioRecorder.settings.uploadTime)
+                $(`[name=${AudioRecorder.settings.uploadTime}]`).val("");
+            if (AudioRecorder.settings.fileName)
+                $(`[name=${AudioRecorder.settings.fileName}]`).val("");
 
             Swal.fire({
                 icon: 'error',
@@ -298,7 +302,7 @@ AudioRecorder.fn.upload = function () {
 
             AudioRecorder.fn.enableSaveButtons();
         },
-        error: function (jqXHR, textStatus, errorMessage) {
+        error: (jqXHR, textStatus, errorMessage) => {
             let footer = '';
             let text = 'Unable to upload recording to REDCap server.';
             let error = errorMessage ? JSON.stringify(errorMessage) : "";
@@ -314,8 +318,10 @@ AudioRecorder.fn.upload = function () {
                 text = text + ' It is strongly recommended that you download the recording below and report this incident to your REDCap administrator.';
             }
 
-            if (AudioRecorder.settings.outcome)
-                $(`[name=${AudioRecorder.settings.outcome}]`).val("Failure");
+            if (AudioRecorder.settings.uploadTime)
+                $(`[name=${AudioRecorder.settings.uploadTime}]`).val("");
+            if (AudioRecorder.settings.fileName)
+                $(`[name=${AudioRecorder.settings.fileName}]`).val("");
 
             Swal.fire({
                 icon: 'error',
@@ -329,14 +335,14 @@ AudioRecorder.fn.upload = function () {
     });
 }
 
-AudioRecorder.fn.download = function () {
+AudioRecorder.fn.download = () => {
     let link = $(AudioRecorder.settings.buttons.download).prop('href');
     if (AudioRecorder.isRecording || !link || link == '#')
         return
     AudioRecorder.isSaved = true;
 }
 
-AudioRecorder.fn.attachEvents = function () {
+AudioRecorder.fn.attachEvents = () => {
     if (AudioRecorder.initAttach)
         return;
 
@@ -350,9 +356,9 @@ AudioRecorder.fn.attachEvents = function () {
     window.onbeforeunload = AudioRecorder.fn.onBeforeUnload;
 }
 
-AudioRecorder.fn.enableSaveButtons = function () {
+AudioRecorder.fn.enableSaveButtons = () => {
     AudioRecorder.disableCalls += AudioRecorder.disableCalls > 0 ? -1 : 0;
-    setTimeout(function () {
+    setTimeout(() => {
         if (AudioRecorder.disableCalls == 0) {
             $("#__SUBMITBUTTONS__-tr button").css('pointer-events', '').removeClass('disabled');
             $(".tmpDisableSave").remove();
@@ -361,7 +367,7 @@ AudioRecorder.fn.enableSaveButtons = function () {
     }, 500);
 }
 
-AudioRecorder.fn.disableSaveButtons = function (displayText) {
+AudioRecorder.fn.disableSaveButtons = (displayText) => {
     AudioRecorder.disableCalls++;
     $("#__SUBMITBUTTONS__-tr button").css('pointer-events', 'none').addClass('disabled');
     if ($(".tmpDisableSave").length == 0)
@@ -371,19 +377,19 @@ AudioRecorder.fn.disableSaveButtons = function (displayText) {
     $(window).resize();
 }
 
-$(window).on("beforeunload", function () {
+$(window).on("beforeunload", () => {
     if (AudioRecorder.isRecording)
         return "Recording in progress!";
     return;
 });
 
-$(document).ready(function () {
+$(document).ready(() => {
     // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
     AudioRecorder.settings.destination = AudioRecorder.settings.destination.replace(/[\/*?"<>|]/g, '');
     // Load the recorder, play nice w/ Shazam
     if (typeof Shazam == "object") {
         let oldCallback = Shazam.beforeDisplayCallback;
-        Shazam.beforeDisplayCallback = function () {
+        Shazam.beforeDisplayCallback = () => {
             if (typeof oldCallback == "function")
                 oldCallback();
             AudioRecorder.fn.attachEvents();
