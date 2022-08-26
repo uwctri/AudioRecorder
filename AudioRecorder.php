@@ -35,7 +35,6 @@ class AudioRecorder extends AbstractExternalModule
             $this->initGlobal();
             $settings = [
                 'email' => $this->getProjectSetting('email'),
-                'destination' => 'c:\testUploads\[timestamp]',
                 'fallback' => true,
                 'noStartError' => false,
                 'recording' => [
@@ -46,7 +45,6 @@ class AudioRecorder extends AbstractExternalModule
                     'init'     => "#initBtn",
                     'start'    => "#startBtn",
                     'stop'     => "#stopBtn",
-                    'upload'   => "#upload",
                     'download' => "#download"
                 ]
             ];

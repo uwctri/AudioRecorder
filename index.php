@@ -23,7 +23,6 @@ require_once APP_PATH_DOCROOT . 'ProjectGeneral/header.php';
 <input type="checkbox" checked id="micAudioToggle" />
 <label for="micAudioToggle">Capture Audio from Microphone</label><br>
 <a id="download" href="#" style="display: none;">Download</a><br>
-<a id="upload" href="#" style="display: none;">Upload to Server</a>
 
 <script>
     $("#audioToggle, #micAudioToggle").on('click', function() {
@@ -33,14 +32,11 @@ require_once APP_PATH_DOCROOT . 'ProjectGeneral/header.php';
     });
     $("#initBtn").on('click', function() {
         $("#audioToggle, #micAudioToggle").prop('disabled', true);
-        $("#download, #upload").hide();
+        $("#download").hide();
     });
     $("#stopBtn").on('click', function() {
         $("#audioToggle, #micAudioToggle").prop('disabled', false);
-        $("#download, #upload").show();
-    });
-    $("#upload").on('click', function() {
-        $("#upload").hide();
+        $("#download").show();
     });
 </script>
 
