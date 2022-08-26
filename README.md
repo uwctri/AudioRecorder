@@ -10,7 +10,16 @@ This EM isn't yet available to install via redcap's EM database so you'll need t
 
 ## Configuration
 
-Configuration is straight forward and requires specifying an instrument to use the module on and css selectors for various functions of the recorder. A typical two-button configuration would involve an "Initialize" button and a "Start / Stop & Upload" button. The destination location supports all expected smart variables. A typical three button layout may look like the following. In a descriptive feild use ...
+Configuration is straight forward and requires specifying an instrument to use and css selectors refrencing buttons or "a" elements in a descriptive field for various functions of the recorder. A typical two-button configuration would involve an "Initialize" button and a "Start / Stop & Upload" button. A descriptive field for a two-button setup is below. Remove all line breaks before using. The seletors used here would be ".initRecording" and ".recordingBtn".
+
+```html
+<div class="text-center">Begin Recording Now<br />
+    <button href="#" class="btn btn-success initRecording" type="button">Initialize Recording</button >
+    <button  href="#" class="btn btn-success recordingBtn" type="button">Start/Stop Recording</button >
+</div>
+```
+
+A three button, less customized layout may look like the below. Here we have used ids for css selectors so the selectors used would be "#initBtn", "#startBtn", and "#stopBtn".
 
 ```html
 <button id="initBtn">Initialize</button>
@@ -18,7 +27,7 @@ Configuration is straight forward and requires specifying an instrument to use t
 <button id="stopBtn">Stop Recording</button>
 ```
 
-See an example configuration below for thee above button layout. You may also want to set a "Upload Time" or "Saved File Name" field which will allow you to easily creat reports for files that have been uploaded.
+You may also want to set a "Upload Time" or "Saved File Name" field which will allow you to easily creat reports for files that have been uploaded.
 ![Config Example](https://i.imgur.com/MUAVtIG.png)
 
 ## Call Outs
