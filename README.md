@@ -6,7 +6,7 @@ AudioRecorder allows for audio capture of the PC's microphone and audio-out, use
 
 ## Installing
 
-This EM isn't yet available to install via redcap's EM database so you'll need to install to your modules folder (i.e. `redcap/modules/audio_recorder_v1.0.0`) manually.
+You can install the module from the REDCap EM repo or drop it directly in your modules folder (i.e. `redcap/modules/audio_recorder_v1.0.0`) manually.
 
 ## Configuration
 
