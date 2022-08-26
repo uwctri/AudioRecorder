@@ -33,7 +33,7 @@
     "project-settings": [
         {
             "key": "descriptive",
-            "name": "Audio Recorder will disable/enable buttons that are not apporpirate to use, but not on page load. Buttons are never hidden.",
+            "name": "Audio Recorder will disable/enable buttons that are not apporpirate to use, but not on page load. Buttons are never hidden. Only one recorder per instrument is supported.",
             "type": "descriptive"
         },
         {

@@ -29,7 +29,6 @@ class AudioRecorder extends AbstractExternalModule
     */
     public function redcap_every_page_top($project_id)
     {
-
         // Audio Reocorder Testing / Demo page
         if ($_GET['prefix'] == $this->getPrefix() && $_GET['page'] == 'index') {
             $this->initGlobal();
@@ -66,16 +65,8 @@ class AudioRecorder extends AbstractExternalModule
     */
     public function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance)
     {
-
-        // Search for the current instrument's config
-        $allInstruments = $this->getProjectSetting('instrument');
-        $settingIndex = -1;
-        foreach ($allInstruments as $index => $instrumentList) {
-            if (in_array($instrument,  $instrumentList))
-                $settingIndex = $index;
-        }
-
         // If no config was found, exit
+        $settingIndex = $this->getSettingsIndex($instrument);
         if ($settingIndex == -1)
             return;
 
@@ -85,9 +76,7 @@ class AudioRecorder extends AbstractExternalModule
 
         // Destination might have piping in it
         $dest = $settings['destination'][$settingIndex];
-        if (Piping::containsSpecialTags($dest)) {
-            $dest = Piping::pipeSpecialTags($dest, $project_id, $record, $event_id, $repeat_instance);
-        }
+        $dest = $this->pipeTags($dest, $project_id, $record, $event_id, $repeat_instance);
 
         // Load rest of the settings into a data strucutre
         $settings = [
@@ -124,44 +113,52 @@ class AudioRecorder extends AbstractExternalModule
         $params = $request->getRequestVars();
 
         if ($params['route'] == "upload") {
-            return $this->upload();
+            return $this->upload($params);
         }
 
         if ($params['route'] == "log") {
-            return $this->projectLog();
+            return $this->projectLog($params);
         }
     }
 
     /*
     Uploads an audio recording to the redcap server and moves the file to
-    the target destination. Invoked via router/ajax
+    the target destination.
     */
-    public function upload()
+    public function upload($params)
     {
+        $fileExtention = ".webm";
 
         // Check to be sure we got a file
         if (!isset($_FILES['file'])) {
-            echo json_encode([
+            return json_encode([
                 "success" => false,
                 "note" => "No file receivied"
             ]);
-            return;
         }
+
+        // Rebuild destination. Pull, Pipe, Pipe in timestamp
+        // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
+        $settingIndex = $this->getSettingsIndex($params['instrument']);
+        $dest = $this->getProjectSetting('destination', $params['project_id'])[$settingIndex];
+        $dest = $this->pipeTags($dest,  $params['project_id'], $params['record'], $params['event_id'], $params['instance']);
+        $dest = preg_replace('/\[timestamp\]/', Date("Ymd_Gis"), $dest);
+        $dest = preg_replace('/[\/*?"<>|]/', "", $dest) . $fileExtention;
 
         // Prep the return object
         $result = [
             "success" => false,
             "tmp" => $_FILES['file']['tmp_name'],
-            "target" => $_POST['destination']
+            "file" => $dest
         ];
 
         // Log to PHP what we are doing. If there is an issue an Admin might need to recover the file
-        ExternalModules::errorLog("File " . $result["tmp"] . " uploaded by Audio Recorder. Destination " . $result['target']);
-        $dir = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPARATOR, $result['target']), 0, -1));
+        ExternalModules::errorLog("File " . $result["tmp"] . " uploaded by Audio Recorder. Destination " . $result['file']);
+        $dir = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPARATOR, $result['file']), 0, -1));
         mkdir($dir, 0777, true);
 
         // Attempt move, log any error
-        if (move_uploaded_file($result["tmp"], $result['target'])) {
+        if (move_uploaded_file($result["tmp"], $result['file'])) {
             $result["success"] = true;
         } else {
             ExternalModules::errorLog("Error moving " . $result["tmp"]);
@@ -173,15 +170,14 @@ class AudioRecorder extends AbstractExternalModule
 
     /*
     Writes a log entry to the project log for Init/start/stop/upload/upload error
-    Invoked via router/ajax
     */
-    public function projectLog()
+    public function projectLog($params)
     {
         $sql = NULL;
         $action = 'Audio Recorder';
         $changes =  $_POST['changes'] ?? "No action logged";
 
-        REDCap::logEvent($action, $changes, $sql, $_POST['record'], $_POST['eventid'], $_GET['pid']);
+        REDCap::logEvent($action, $changes, $sql, $params['record'], $params['event_id'], $params['project_id']);
         return json_encode([
             'text' => 'Action logged'
         ]);
@@ -202,6 +198,32 @@ class AudioRecorder extends AbstractExternalModule
             "router" => $this->getUrl('router.php')
         ]);
         echo "<script>var {$this->module_global} = {$data};</script>";
+    }
+
+    /*
+    Search for the current instrument's config position
+    */
+    private function getSettingsIndex($instrument, $project_id = NULL)
+    {
+        $allInstruments = $this->getProjectSetting('instrument', $project_id);
+        $settingIndex = -1;
+        foreach ($allInstruments as $index => $instrumentList) {
+            if (in_array($instrument,  $instrumentList)) {
+                $settingIndex = $index;
+            }
+        }
+        return $settingIndex;
+    }
+
+    /*
+    Pipe in redcap standard tags
+    */
+    private function pipeTags($str, $project_id, $record, $event_id, $repeat_instance)
+    {
+        if (Piping::containsSpecialTags($str)) {
+            $str = Piping::pipeSpecialTags($str, $project_id, $record, $event_id, $repeat_instance);
+        }
+        return $str;
     }
 
     /*

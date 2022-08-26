@@ -9,22 +9,20 @@ AudioRecorder.isSaved = true;
 AudioRecorder.extention = 'webm';
 AudioRecorder.codecs = 'opus';
 AudioRecorder.disableCalls = 0;
+AudioRecorder.timeOut = 5000;
 
 const Toast = Swal.mixin({
     toast: true,
     position: 'top-right',
     showConfirmButton: false,
-    timer: 5000,
+    timer: AudioRecorder.timeOut,
     timerProgressBar: true,
 });
 
 AudioRecorder.fn.log = (details) => {
     details = details || "";
     let record = getParameterByName('id');
-    let eventid = getParameterByName('event_id');
-
-    if (!record || !eventid)
-        return;
+    if (!record) return; // Skip log on demo page
 
     $.ajax({
         method: 'POST',
@@ -33,7 +31,8 @@ AudioRecorder.fn.log = (details) => {
             route: 'log',
             changes: details,
             record: record,
-            eventid: eventid,
+            event_id: event_id,
+            project_id: pid,
             redcap_csrf_token: AudioRecorder.csrf
         },
         error: (jqXHR, textStatus, errorThrown) => console.log(`${jqXHR}\n${textStatus}\n${errorThrown}`),
@@ -152,8 +151,9 @@ AudioRecorder.fn.init = async () => {
         AudioRecorder.url = window.URL.createObjectURL(AudioRecorder.blob);
         AudioRecorder.file = AudioRecorder.fn.pipe(AudioRecorder.settings.destination) + '.' + AudioRecorder.extention;
         AudioRecorder.download = AudioRecorder.file.includes(':\\') ? AudioRecorder.file.split('\\').pop() : AudioRecorder.file.split('/').pop();
-        if (AudioRecorder.settings.buttons.download)
+        if (AudioRecorder.settings.buttons.download) {
             $(AudioRecorder.settings.buttons.download).prop('href', AudioRecorder.url).prop('download', download).prop('disabled', false);
+        }
         $(AudioRecorder.settings.buttons.upload).prop('disabled', false);
     };
 
@@ -244,8 +244,12 @@ AudioRecorder.fn.upload = () => {
     AudioRecorder.isSaved = true;
     let formData = new FormData();
     formData.append('file', AudioRecorder.blob);
-    formData.append('destination', AudioRecorder.file);
     formData.append('route', 'upload');
+    formData.append('record', getParameterByName("id"));
+    formData.append('event_id', event_id);
+    formData.append('instrument', getParameterByName("page"));
+    formData.append('instance', getParameterByName("instance"));
+    formData.append('project_id', pid);
     formData.append('redcap_csrf_token', AudioRecorder.csrf);
     $(AudioRecorder.settings.buttons.upload).prop('disabled', true);
     $.ajax({
@@ -267,7 +271,7 @@ AudioRecorder.fn.upload = () => {
                 if (AudioRecorder.settings.uploadTime)
                     $(`[name=${AudioRecorder.settings.uploadTime}]`).val(formatDate(new Date(), 'y-MM-dd HH:mm'));
                 if (AudioRecorder.settings.fileName)
-                    $(`[name=${AudioRecorder.settings.fileName}]`).val(AudioRecorder.file.split(/\\|\//).slice(-1)[0]);
+                    $(`[name=${AudioRecorder.settings.fileName}]`).val(data.file.split(/\\|\//).slice(-1)[0]);
                 AudioRecorder.fn.enableSaveButtons();
                 return;
             }
@@ -276,7 +280,7 @@ AudioRecorder.fn.upload = () => {
             let footer = '';
             let text = 'Issue uploading recording to REDCap server.';
             if (AudioRecorder.errorEmail) {
-                let msg = `tmp: ${data.tmp}\ndst: ${data.target}\nuser: ${$("#username-reference").text()}\ntime: ${(new Date()).toString()}\nurl: ${window.location.href}`;
+                let msg = `tmp: ${data.tmp}\ndst: ${data.file}\nuser: ${$("#username-reference").text()}\ntime: ${(new Date()).toString()}\nurl: ${window.location.href}`;
                 sendSingleEmail(AudioRecorder.sendingEmail, AudioRecorder.errorEmail, 'AudioRecorder - Failed to move file', msg);
                 text = text + ' Your REDCap administrator has been notified of this issue and may be able to recover the recording.'
             }
@@ -300,6 +304,7 @@ AudioRecorder.fn.upload = () => {
             });
 
             AudioRecorder.fn.enableSaveButtons();
+            $(AudioRecorder.settings.buttons.start).prop('disabled', false);
         },
         error: (jqXHR, textStatus, errorMessage) => {
             let footer = '';
@@ -384,7 +389,9 @@ $(window).on("beforeunload", () => {
 
 $(document).ready(() => {
     // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
+    // We will only use this for a file name if we download the file locally
     AudioRecorder.settings.destination = AudioRecorder.settings.destination.replace(/[\/*?"<>|]/g, '');
+
     // Load the recorder, play nice w/ Shazam
     if (typeof Shazam == "object") {
         let oldCallback = Shazam.beforeDisplayCallback;
