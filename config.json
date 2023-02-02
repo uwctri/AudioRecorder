@@ -87,6 +87,11 @@
                     "type": "textbox"
                 },
                 {
+                    "key": "file-repo",
+                    "name": "<b>Upload to REDCap file repo</b>",
+                    "type": "checkbox"
+                },
+                {
                     "key": "fallback",
                     "name": "<b>Recommend local download if upload fails</b><br>The error popup will contain a download link",
                     "type": "checkbox"

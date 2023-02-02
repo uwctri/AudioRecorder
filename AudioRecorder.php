@@ -115,9 +115,10 @@ class AudioRecorder extends AbstractExternalModule
     Uploads an audio recording to the redcap server and moves the file to
     the target destination.
     */
-    public function upload($project_id, $record, $event_id, $instrument, $instance)
+    private function upload($project_id, $record, $event_id, $instrument, $instance)
     {
         $fileExtention = ".webm";
+        $ts_format = "Ymd_Gis";
 
         // Check to be sure we got a file
         if (!isset($_FILES['file'])) {
@@ -130,40 +131,93 @@ class AudioRecorder extends AbstractExternalModule
         // Rebuild destination. Pull, Pipe, Pipe in timestamp
         // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
         $settingIndex = $this->getSettingsIndex($instrument);
+        $fileRepo = $this->getProjectSetting('file-repo', $project_id)[$settingIndex];
         $dest = $this->getProjectSetting('destination', $project_id)[$settingIndex];
         $dest = $this->pipeTags($dest,  $project_id,  $record, $event_id, $instance);
-        $dest = preg_replace('/\[timestamp\]/', Date("Ymd_Gis"), $dest);
+        $dest = preg_replace('/\[timestamp\]/', Date($ts_format), $dest);
         $dest = preg_replace('/[\/*?"<>|]/', "", $dest) . $fileExtention;
 
-        // Prep the return object
-        $result = [
-            "success" => false,
-            "tmp" => $_FILES['file']['tmp_name'],
-            "file" => $dest
-        ];
+        // Prep
+        $note = "";
+        $success = false;
+        $tmp = $_FILES['file']['tmp_name'];
+        $dir = dirname($dest);
 
-        // Log to PHP what we are doing. If there is an issue an Admin might need to recover the file
-        ExternalModules::errorLog("File " . $result["tmp"] . " uploaded by Audio Recorder. Destination " . $result['file']);
-        $dir = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPARATOR, $result['file']), 0, -1));
-        mkdir($dir, 0777, true);
-
-        // Attempt move, log any error
-        if (move_uploaded_file($result["tmp"], $result['file'])) {
-            $result["success"] = true;
-            $this->projectLog($project_id, $record, $event_id, "Recording Uploaded:\n" . $result['file']);
-        } else {
-            ExternalModules::errorLog("Error moving " . $result["tmp"] . " to new destination " . $result['file']);
-            $result["note"] = "Failed to move temporary file to destination";
-            $this->projectLog($project_id, $record, $event_id, "Error Uploading File.");
+        // Upload to file repo
+        if ($fileRepo) {
+            return $this->saveToFileRepo($project_id, $record, $event_id, $dest, $tmp);
         }
 
+        // Log to PHP what we are doing. If there is an issue an Admin might need to recover the file
+        ExternalModules::errorLog("File " . $tmp . " uploaded by Audio Recorder. Destination " . $dest);
+        $dirExists = is_dir($dir);
+        $dirExists = $dirExists ? true : mkdir($dir, 0777, true);
+
+        // Attempt move, log any error
+        if ($dirExists && move_uploaded_file($tmp, $dest)) {
+            $success = true;
+            $this->projectLog($project_id, $record, $event_id, "Recording Uploaded:\n" . $dest);
+        } else {
+            $extaMsg = $dirExists ? "" : " Failed to create directory";
+            ExternalModules::errorLog("Error moving " . $tmp . " to new destination " . $dest . $extaMsg);
+            $result["note"] = "Failed to move temporary file to destination";
+            $this->projectLog($project_id, $record, $event_id, "Error Uploading Audio Recording." . $extaMsg);
+        }
+
+        return json_encode([
+            "success" => $success,
+            "file" => $dest,
+            "tmp" => $tmp,
+            "note" => $note
+        ]);
+    }
+
+    /*
+    Transfer an uploaded PHP file to the Redcap file repo for a project
+    */
+    private function saveToFileRepo($project_id, $record, $event_id, $filename, $tmp)
+    {
+        $file = basename($filename);
+        $rename = dirname($tmp) . DIRECTORY_SEPARATOR . $file;
+        $result = [
+            "file" => $file,
+            "tmp" => $tmp,
+            "success" => false
+        ];
+
+        // Rename the file to what end user wants
+        if (!move_uploaded_file($tmp, $rename)) {
+            ExternalModules::errorLog("Error moving " . $tmp . " to new destination " . $rename);
+            $result["note"] = "Failed to move temporary file to file repo";
+            $this->projectLog($project_id, $record, $event_id, "Error Uploading Audio Recording to REDCap file repo");
+            return json_encode($result);
+        }
+
+        // Try to enter the file into redcap's metadata
+        $doc_id = REDCap::storeFile($rename, $project_id);
+        if ($doc_id == 0) {
+            ExternalModules::errorLog("REDCap::storeFile has failed to add file $rename to the edoc metadata for PID $project_id");
+            $result["note"] = "Redcap internal method failed to move file into file repo";
+            $this->projectLog($project_id, $record, $event_id, "Error Uploading Audio Recording to REDCap file repo");
+            return json_encode($result);
+        }
+        $result['doc_id'] = $doc_id;
+
+        // Try to add the registered doc to the file repo
+        if (!REDCap::addFileToRepository($doc_id, $project_id, "Audio Recorder EM Upload")) {
+            ExternalModules::errorLog("REDCap::storeFile has failed to add doc_id $doc_id to the file repo for PID $project_id");
+            $result["note"] = "Redcap internal method failed to move file into file repo";
+            $this->projectLog($project_id, $record, $event_id, "Error Uploading Audio Recording to REDCap file repo");
+            return json_encode($result);
+        }
+        $result["success"] = true;
         return json_encode($result);
     }
 
     /*
     Writes a log entry to the project log for Init/start/stop/upload/upload error
     */
-    public function projectLog($project_id, $record, $event_id, $text)
+    private function projectLog($project_id, $record, $event_id, $text)
     {
         $sql = NULL;
         $action = 'Audio Recorder';

@@ -21,14 +21,14 @@ $(document).ready(() => {
                     let a = $(this).find('input').prop('name').split('____')[1];
                     $(this).find('td').first().attr('colspan', '2').prepend(
                         `<b>Destination File Path:</b><br>`
-                    ).append(`<br><span>Location on the Redcap server to save the recording to, should include the file name. If not uploading then a file name should be given for the downloaded recording. Do not include a file extention, all files are saved as webm.
+                    ).append(`<br><span>Location on the Redcap server to save the recording to, including the file name. If downloading or saving to the file repo then specify a filename only. Do not include a file extention, all files are saved as webm.
                     </span>${module.helperButtons}<br><span>You may also pipe a [timestamp] into the destination</span>`);
                     $(this).find('input').addClass("mt-1");
                 }
             });
 
             // Hide poorly formatted stuff
-            $("tr[field=fallback], tr[field=suppress-start-error], tr[field=upload-time], tr[field=file-name]").find('.external-modules-instance-label').text('');
+            $modal.find('tr').not('.sub_parent').find('.external-modules-instance-label').text('')
         };
     });
 
