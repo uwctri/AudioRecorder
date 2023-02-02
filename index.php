@@ -27,8 +27,8 @@ require_once APP_PATH_DOCROOT . 'ProjectGeneral/header.php';
 <script>
     $("#audioToggle, #micAudioToggle").on('click', function() {
         $("#initBtn").prop('disabled', !$("#audioToggle, #micAudioToggle").is(":checked"));
-        AudioRecorder.settings.recording.desktop = $("#audioToggle").is(":checked");
-        AudioRecorder.settings.recording.mic = $("#micAudioToggle").is(":checked");
+        ExternalModules.UWMadison.AudioRecorder.recording.desktop = $("#audioToggle").is(":checked");
+        ExternalModules.UWMadison.AudioRecorder.recording.mic = $("#micAudioToggle").is(":checked");
     });
     $("#initBtn").on('click', function() {
         $("#audioToggle, #micAudioToggle").prop('disabled', true);

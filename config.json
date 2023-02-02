@@ -6,7 +6,7 @@
         {
             "name": "Adam Nunez",
             "email": "Adam.Nunez@ctri.wisc.edu",
-            "institution": "UW Madison - Center for Tobacco Research and Intervention "
+            "institution": "UW Madison - Center for Tobacco Research and Intervention"
         }
     ],
     "permissions": [
@@ -14,13 +14,6 @@
         "redcap_data_entry_form"
     ],
     "framework-version": 10,
-    "system-settings": [
-        {
-            "key": "error-email",
-            "name": "<b>Email Errors to:</b><br>Notifications for server side failures",
-            "type": "textbox"
-        }
-    ],
     "links": {
         "project": [
             {
@@ -40,11 +33,6 @@
             "key": "show-em-link",
             "name": "<b>Show 'Audio Recoder' Demo Page link</b>",
             "type": "checkbox"
-        },
-        {
-            "key": "email",
-            "name": "<b>Email issue report to</b><br>If, for any reason, REDCap is not able to save the<br>audio to the destination an email of the incident<br>will be sent here",
-            "type": "textbox"
         },
         {
             "key": "recorder-instance",
