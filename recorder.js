@@ -121,6 +121,8 @@
         $(module.buttons.download).prop('disabled', true);
         $(module.buttons.upload).prop('disabled', true);
         $(module.buttons.download).prop('href', '#').prop('download', '');
+        let voiceStream = null;
+        let desktopStream = null
 
         try {
             if (module.recording.mic) {
