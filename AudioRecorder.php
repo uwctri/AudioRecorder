@@ -242,7 +242,7 @@ class AudioRecorder extends AbstractExternalModule
             "router" => $this->getUrl('router.php'),
             "helperButtons" => $this->getPipingHelperButtons()
         ], $additionalData));
-        echo "<script>{$this->getJavascriptModuleObjectName()} = {$data};</script>\n";
+        echo "<script>Object.assign({$this->getJavascriptModuleObjectName()}, {$data});</script>";
     }
 
     /*

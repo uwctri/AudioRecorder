@@ -1,19 +1,28 @@
+const AudioRecorder = { init: null, start: null, stop: null, upload: null, download: null };
+
 (() => {
+    // Constants
     const module = ExternalModules.UWMadison.AudioRecorder;
     const extention = 'webm';
     const codecs = 'opus';
     const timeOut = 5000;
     const defaultFileName = "[timestamp]";
 
+    // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
+    // We will only use this for a file name if we download the file locally
+    module.destination ??= defaultFileName;
+    module.destination = module.destination.replace(/[\/*?"<>|]/g, '');
+
+    // State globals
     let isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor) && (navigator.userAgent.split('Chrome/')[1].split('.')[0] >= 74);
     let initFailure = false;
     let initSuccess = false;
-    let initAttach = false;
     let isRecording = false;
     let showInitError = true;
     let isSaved = true;
     let disableCalls = 0;
 
+    // Streaming globals
     let stream;
     let rec;
     let blob;
@@ -75,7 +84,7 @@
         }
 
         return hasDesktop || hasVoice ? destination.stream.getAudioTracks() : [];
-    };
+    }
 
     const permissionFailure = () => {
         initFailure = true;
@@ -340,16 +349,13 @@
         });
     }
 
-    const attachEvents = () => {
-        if (initAttach) return;
-
-        initAttach = true;
-        $(module.buttons.init).on('click', init);
-        $(module.buttons.start).on('click', start);
-        $(module.buttons.stop).on('click', stop);
-        $(module.buttons.upload).on('click', upload);
-        oldUnload = window.onbeforeunload;
-        window.onbeforeunload = onBeforeUnload;
+    const download = () => {
+        if (!downloadName || !downloadUrl)
+            return;
+        let el = document.createElement('a');
+        el.download = downloadName;
+        el.href = downloadUrl;
+        el.click().remove();
     }
 
     const enableSaveButtons = () => {
@@ -378,23 +384,18 @@
             return "Recording in progress!";
     });
 
-    $(document).ready(() => {
-        // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
-        // We will only use this for a file name if we download the file locally
-        module.destination ??= defaultFileName;
-        module.destination = module.destination.replace(/[\/*?"<>|]/g, '');
-
-        // Load the recorder, play nice w/ Shazam
-        if (typeof Shazam == "object") {
-            let oldCallback = Shazam.beforeDisplayCallback;
-            Shazam.beforeDisplayCallback = () => {
-                if (typeof oldCallback == "function")
-                    oldCallback();
-                attachEvents();
-            }
-            setTimeout(attachEvents, 2000);
-        } else {
-            attachEvents();
-        }
+    module.afterRender(() => {
+        $(module.buttons.init).on('click', init);
+        $(module.buttons.start).on('click', start);
+        $(module.buttons.stop).on('click', stop);
+        $(module.buttons.upload).on('click', upload);
+        oldUnload = window.onbeforeunload;
+        window.onbeforeunload = onBeforeUnload;
     });
+
+    AudioRecorder.init = init;
+    AudioRecorder.start = start;
+    AudioRecorder.stop = stop;
+    AudioRecorder.upload = upload;
+    AudioRecorder.download = download;
 })();
