@@ -385,12 +385,28 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
     });
 
     module.afterRender(() => {
-        $(module.buttons.init).on('click', init);
-        $(module.buttons.start).on('click', start);
-        $(module.buttons.stop).on('click', stop);
-        $(module.buttons.upload).on('click', upload);
-        oldUnload = window.onbeforeunload;
-        window.onbeforeunload = onBeforeUnload;
+
+        const attach = () => {
+            $(module.buttons.init).on('click', init);
+            $(module.buttons.start).on('click', start);
+            $(module.buttons.stop).on('click', stop);
+            $(module.buttons.upload).on('click', upload);
+            oldUnload = window.onbeforeunload;
+            window.onbeforeunload = onBeforeUnload;
+        };
+
+        if (typeof Shazam !== "object") {
+            attach();
+            return
+        }
+
+        let oldCallback = Shazam.beforeDisplayCallback;
+        Shazam.beforeDisplayCallback = () => {
+            if (typeof oldCallback == "function")
+                oldCallback();
+            attach();
+        }
+        setTimeout(attach, 2000);
     });
 
     AudioRecorder.init = init;
