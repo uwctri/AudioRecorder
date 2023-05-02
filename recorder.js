@@ -386,7 +386,11 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
 
     module.afterRender(() => {
 
+        let attached = false;
+
         const attach = () => {
+            if (attached) return;
+            attached = true;
             $(module.buttons.init).on('click', init);
             $(module.buttons.start).on('click', start);
             $(module.buttons.stop).on('click', stop);
@@ -397,7 +401,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
 
         if (typeof Shazam !== "object") {
             attach();
-            return
+            return;
         }
 
         let oldCallback = Shazam.beforeDisplayCallback;
