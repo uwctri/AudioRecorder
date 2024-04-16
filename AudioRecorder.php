@@ -72,6 +72,7 @@ class AudioRecorder extends AbstractExternalModule
         // Load rest of the settings into a data strucutre
         $settings = [
             'destination' => $dest,
+            'maxTime' => intval($settings['max-time'][$settingIndex]),
             'noStartError' => $settings['suppress-start-error'][$settingIndex] == '1',
             'fallback' => $settings['fallback'][$settingIndex] == '1',
             'uploadTime' => $settings['upload-time'][$settingIndex],

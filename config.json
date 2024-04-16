@@ -9,11 +9,7 @@
             "institution": "UW Madison - Center for Tobacco Research and Intervention"
         }
     ],
-    "permissions": [
-        "redcap_every_page_top",
-        "redcap_data_entry_form"
-    ],
-    "framework-version": 10,
+    "framework-version": 12,
     "links": {
         "project": [
             {
@@ -45,6 +41,11 @@
                     "name": "<b>Instrument</b><br>Forms to enable the recorder on",
                     "type": "form-list",
                     "repeatable": true
+                },
+                {
+                    "key": "max-time",
+                    "name": "<b>Max Record Time (mins)</b><br>Recording will be stoped, but not uploaded",
+                    "type": "textbox"
                 },
                 {
                     "key": "desktop",
@@ -115,6 +116,6 @@
         }
     ],
     "compatibility": {
-        "redcap-version-min": "10.0.0"
+        "redcap-version-min": "13.1.0"
     }
 }

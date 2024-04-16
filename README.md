@@ -30,10 +30,12 @@ A three button, less customized layout may look like the below. Here we have use
 You may also want to set a "Upload Time" or "Saved File Name" field which will allow you to easily creat reports for files that have been uploaded.
 ![Config Example](https://i.imgur.com/MUAVtIG.png)
 
-## Call Outs
+## Technical Notes
 
-* Feature Request - Show audio levels in the Toast pop-up. This would be a good indicator that the user's mic is working as expected and that they are capturing both audio streams as they expect.
+* This EM exposes a JS object `AudioRecorder` that allows you to programmatically invoke start/top/init/upload. You can use these functions if you prefer to integrate the EM into your form.
 
 * Due to limitations in the js implementation of `mediaDevices.getDisplayMedia` in some browsers only chrome and chrome-derivatives are supported. Errors exist to inform end-users of this.
 
 * You will only be able to upload recordings to locations that the php user has write access to. If you wish to write to a network drive you may want to write to the local server and then sync the files via a cron job rather than give the php user write access.
+
+* Redcap has a native log and ajax support in JS, but the EM logs are harder to search and the ajax method doesn't support blob uploads so we are unable to use them.

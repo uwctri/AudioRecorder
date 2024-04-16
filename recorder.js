@@ -30,6 +30,8 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
     let downloadName;
     let downloadUrl;
     let file;
+    let autoStopTimeout;
+    let recordingToast;
 
     const Toast = Swal.mixin({
         toast: true,
@@ -215,7 +217,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         try {
             rec.start();
             disableSaveButtons('recording audio');
-            toast = Toast.fire({
+            recordingToast = Toast.fire({
                 icon: 'info',
                 title: 'Recording Audio',
                 timer: 0
@@ -223,6 +225,9 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
 
             //Record atleast 1 second of audio before allowing a stop
             setTimeout(() => { isRecording = true; }, 1000);
+
+            if (module.maxTime > 0)
+                autoStopTimeout = setTimeout(stop, 1000 * 60 * module.maxTime, null, true)
 
             log('Recording Started');
         } catch (e) {
@@ -236,7 +241,17 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         }
     }
 
-    const stop = () => {
+    const stop = (e = null, timedout = false) => {
+        if (module.maxTime > 0)
+            clearTimeout(autoStopTimeout)
+
+        if (timedout)
+            Swal.fire({
+                icon: 'info',
+                title: 'Recorder Auto Stopped',
+                text: 'Maximum recording length has been reached and the recording stopped. Please manually upload or download the recording.',
+            });
+
         if (!isRecording)
             return;
 
@@ -247,7 +262,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         enableSaveButtons();
 
         rec.stop();
-        toast.close();
+        recordingToast.close();
         log('Recording Stoped');
     }
 
