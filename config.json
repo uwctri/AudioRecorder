@@ -100,14 +100,24 @@
                     "type": "textbox"
                 },
                 {
+                    "key": "upload-method",
+                    "name": "<b>Upload Destination</b>",
+                    "type": "radio",
+                    "choices": [
+                        {
+                            "value": "filerepo",
+                            "name": "Redcap File Repo"
+                        },
+                        {
+                            "value": "disk",
+                            "name": "Web Server Disk Path"
+                        }
+                    ]
+                },
+                {
                     "key": "destination",
                     "name": "",
                     "type": "textbox"
-                },
-                {
-                    "key": "file-repo",
-                    "name": "<b>Upload to REDCap file repo</b>",
-                    "type": "checkbox"
                 },
                 {
                     "key": "fallback",
@@ -121,12 +131,12 @@
                 },
                 {
                     "key": "upload-time",
-                    "name": "<b>Upload Time</b><br>A text field on the instrument will be populated with the date time of succesfull upload",
+                    "name": "<b>Upload/Download Time</b><br>A text field on the instrument will be populated with the date time of succesfull upload/download",
                     "type": "field-list"
                 },
                 {
                     "key": "file-name",
-                    "name": "<b>Saved File Name</b><br>A text field on the instrument will be populated with the file name on succesfull upload",
+                    "name": "<b>Saved File Name</b><br>A text field on the instrument will be populated with the file name on succesfull upload/download",
                     "type": "field-list"
                 }
             ]

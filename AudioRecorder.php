@@ -10,8 +10,6 @@ use Piping;
 use RCView;
 use RestUtility;
 
-// TODO - respect the two new ALLOW settings
-// TODO - config js check to show only correct settings
 // TODO - recorder check to not attempt an upload
 // TODO - PHP check to not perform an upload
 
@@ -21,10 +19,20 @@ class AudioRecorder extends AbstractExternalModule
 
     public function redcap_module_system_enable($version)
     {
-        // We upgraded and need to maintain the existing settings
-        if (count($this->getProjectsWithModuleEnabled())) {
-            $this->setSystemSetting('allow-filerepo', $this->getSystemSetting('allow-filerepo') ?? '1');
-            $this->setSystemSetting('allow-disk', $this->getSystemSetting('allow-disk') ?? '1');
+        if ($version >= '1.2.0') {
+            // We might be upgrading and need to map settings
+            $pids = $this->getProjectsWithModuleEnabled();
+            if (count($pids)) {
+                $this->setSystemSetting('allow-filerepo', $this->getSystemSetting('allow-filerepo') ?? '1');
+                $this->setSystemSetting('allow-disk', $this->getSystemSetting('allow-disk') ?? '1');
+            }
+            foreach ($pids as $pid) {
+                if (empty($this->getProjectSetting('destination', $pid)) || !empty($this->getProjectSetting('upload-method', $pid)))
+                    continue;
+                // We might set the upload method on projects that don't need it, not a big deal
+                $old = $this->getProjectSetting('file-repo', $pid);
+                $this->setProjectSetting('upload-method', $old == '1' ? 'filerepo' : 'disk', $pid);
+            }
         }
     }
 
