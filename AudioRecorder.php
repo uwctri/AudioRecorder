@@ -10,6 +10,11 @@ use Piping;
 use RCView;
 use RestUtility;
 
+// TODO - respect the two new ALLOW settings
+// TODO - config js check to show only correct settings
+// TODO - recorder check to not attempt an upload
+// TODO - PHP check to not perform an upload
+
 class AudioRecorder extends AbstractExternalModule
 {
     private $defaultMaxTime = 120;
