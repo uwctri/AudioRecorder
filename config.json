@@ -19,6 +19,23 @@
             }
         ]
     },
+    "system-settings": [
+        {
+            "key": "admin-max-time",
+            "name": "<b>Max Record Time (mins)</b><br>Default: 120<br>Limits the max recording time across all projects",
+            "type": "textbox"
+        },
+        {
+            "key": "allow-filerepo",
+            "name": "<b>Allow audio uploads to the file repo</b>",
+            "type": "checkbox"
+        },
+        {
+            "key": "allow-disk",
+            "name": "<b>Allow audio uploads to a disk path</b>",
+            "type": "checkbox"
+        }
+    ],
     "project-settings": [
         {
             "key": "descriptive",
@@ -44,7 +61,7 @@
                 },
                 {
                     "key": "max-time",
-                    "name": "<b>Max Record Time (mins)</b><br>Recording will be stoped, but not uploaded",
+                    "name": "<b>Max Record Time (mins)</b><br>System level max time: <span class='audio-em-max-time'></span><br>Recording will be stoped, but not uploaded",
                     "type": "textbox"
                 },
                 {

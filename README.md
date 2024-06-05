@@ -27,8 +27,8 @@ A three button, less customized layout may look like the below. Here we have use
 <button id="stopBtn">Stop Recording</button>
 ```
 
-You may also want to set a "Upload Time" or "Saved File Name" field which will allow you to easily creat reports for files that have been uploaded.
-![Config Example](https://i.imgur.com/MUAVtIG.png)
+You may also want to set a "Upload Time" or "Saved File Name" field which will allow you to easily create reports for files that have been uploaded.
+![Config Example](https://aanunez.io/img/audio_recorder.png)
 
 ## Technical Notes
 

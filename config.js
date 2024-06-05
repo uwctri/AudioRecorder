@@ -14,7 +14,13 @@ $(document).ready(() => {
             if ($modal.data('module') !== module.prefix) return;
             $modal.find('thead').remove();
 
-            // Make URL wide
+            // Add explination about uploads
+            if (!module.allowFileRepo && !module.allowDisk) {
+                const text = $modal.find("tr[field='descriptive'] label").first().text()
+                $modal.find("tr[field='descriptive'] label").first().html(text + "<br><b>Your REDCap admin has not enabled uploads to disk or File Repo. If you'd like to upload your recordings please reach out to your local REDCap admin.</b>")
+            }
+
+            // Pretty up the URL/Filename field
             $modal.find("tr[field=destination]").each(function () {
                 if ($(this).find('td').length == 3) {
                     $(this).find('td').first().remove();
@@ -26,6 +32,9 @@ $(document).ready(() => {
                     $(this).find('input').addClass("mt-1");
                 }
             });
+
+            // Set max time
+            $(".audio-em-max-time").text(module.adminMaxTime)
 
             // Hide poorly formatted stuff
             $modal.find('tr').not('.sub_parent').find('.external-modules-instance-label').text('')

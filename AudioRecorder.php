@@ -12,6 +12,17 @@ use RestUtility;
 
 class AudioRecorder extends AbstractExternalModule
 {
+    private $defaultMaxTime = 120;
+
+    public function redcap_module_system_enable($version)
+    {
+        // We upgraded and need to maintain the existing settings
+        if (count($this->getProjectsWithModuleEnabled())) {
+            $this->setSystemSetting('allow-filerepo', $this->getSystemSetting('allow-filerepo') ?? '1');
+            $this->setSystemSetting('allow-disk', $this->getSystemSetting('allow-disk') ?? '1');
+        }
+    }
+
     /*
     Redcap hook to display the Audio EM page on if enabled in settings.
     Page is useful for debugging, testing, and experimenting.
@@ -69,10 +80,15 @@ class AudioRecorder extends AbstractExternalModule
         $dest = $settings['destination'][$settingIndex];
         $dest = $this->pipeTags($dest, $project_id, $record, $event_id, $repeat_instance);
 
+        // Admin settings
+        $adminMaxTime = intval($this->getSystemSetting("admin-max-time") ?? $this->defaultMaxTime);
+        $maxTime = intval($settings['max-time'][$settingIndex]) ?? $adminMaxTime;
+        $maxTime = ($maxTime > $adminMaxTime) || ($maxTime == 0) ? $adminMaxTime : $maxTime;
+
         // Load rest of the settings into a data strucutre
         $settings = [
             'destination' => $dest,
-            'maxTime' => intval($settings['max-time'][$settingIndex]),
+            'maxTime' => $maxTime,
             'noStartError' => $settings['suppress-start-error'][$settingIndex] == '1',
             'fallback' => $settings['fallback'][$settingIndex] == '1',
             'uploadTime' => $settings['upload-time'][$settingIndex],
@@ -96,7 +112,7 @@ class AudioRecorder extends AbstractExternalModule
     }
 
     /*
-    Process a post request from API or router
+    Process a post request from or router
     */
     public function process()
     {
@@ -241,7 +257,10 @@ class AudioRecorder extends AbstractExternalModule
             "csrf" => $this->getCSRFToken(),
             "prefix" => $this->getPrefix(),
             "router" => $this->getUrl('router.php'),
-            "helperButtons" => $this->getPipingHelperButtons()
+            "helperButtons" => $this->getPipingHelperButtons(),
+            "adminMaxTime" => intval($this->getSystemSetting("admin-max-time") ?? $this->defaultMaxTime),
+            "allowFileRepo" => $this->getProjectSetting('allow-filerepo') == '1',
+            "allowDisk" => $this->getProjectSetting('allow-disk') == '1',
         ], $additionalData));
         echo "<script>Object.assign({$this->getJavascriptModuleObjectName()}, {$data});</script>";
     }
