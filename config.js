@@ -23,8 +23,9 @@ $(document).ready(() => {
                 $modal.find("tr[field=upload-method]").hide()
             }
 
-            if (!module.allowFileRepo || !module.allowDisk) {
-                $modal.find("tr[field=upload-method]").hide()
+            // XOR the upload methods, disable one of them
+            if (!module.allowFileRepo != !module.allowDisk) {
+                $modal.find(`tr[field=upload-method] input[value=${module.allowDisk ? 'filerepo' : 'disk'}]`).prop("disabled", true)
             }
 
             // Pretty up the URL/Filename field
