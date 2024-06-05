@@ -10,9 +10,6 @@ use Piping;
 use RCView;
 use RestUtility;
 
-// TODO - recorder check to not attempt an upload
-// TODO - PHP check to not perform an upload
-
 class AudioRecorder extends AbstractExternalModule
 {
     private $defaultMaxTime = 120;
@@ -161,11 +158,20 @@ class AudioRecorder extends AbstractExternalModule
         // Rebuild destination. Pull, Pipe, Pipe in timestamp
         // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
         $settingIndex = $this->getSettingsIndex($instrument);
-        $fileRepo = $this->getProjectSetting('file-repo', $project_id)[$settingIndex];
+        $method = $this->getProjectSetting('upload-method', $project_id)[$settingIndex];
+        $filerepo = $this->getSystemSetting('allow-filerepo') == '1' && ($method == 'filerepo' || empty($method));
+        $disk = $this->getSystemSetting('allow-disk') == '1' && ($method == 'disk' || empty($method));
         $dest = $this->getProjectSetting('destination', $project_id)[$settingIndex];
         $dest = $this->pipeTags($dest,  $project_id,  $record, $event_id, $instance);
         $dest = preg_replace('/\[timestamp\]/', Date($ts_format), $dest);
         $dest = preg_replace('/[\/*?"<>|]/', "", $dest) . $fileExtention;
+
+        if (empty($dest) || (!$filerepo && !$disk)) {
+            return json_encode([
+                "success" => false,
+                "note" => "No destination found. Check settings."
+            ]);
+        }
 
         // Prep
         $note = "";
@@ -174,7 +180,7 @@ class AudioRecorder extends AbstractExternalModule
         $dir = dirname($dest);
 
         // Upload to file repo
-        if ($fileRepo) {
+        if ($filerepo) {
             return $this->saveToFileRepo($project_id, $record, $event_id, $dest, $tmp);
         }
 

@@ -275,6 +275,9 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
             return;
         }
 
+        if (!module.allowDisk && !module.allowFileRepo)
+            return;
+
         disableSaveButtons('uploading audio');
         isSaved = true;
         let formData = new FormData();
