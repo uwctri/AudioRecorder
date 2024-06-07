@@ -14,22 +14,26 @@ class AudioRecorder extends AbstractExternalModule
 {
     private $defaultMaxTime = 120;
 
-    public function redcap_module_system_enable($version)
+    public function redcap_module_system_enable()
     {
-        if ($version >= '1.2.0') {
-            // We might be upgrading and need to map settings
-            $pids = $this->getProjectsWithModuleEnabled();
-            if (count($pids)) {
-                $this->setSystemSetting('allow-filerepo', $this->getSystemSetting('allow-filerepo') ?? '1');
-                $this->setSystemSetting('allow-disk', $this->getSystemSetting('allow-disk') ?? '1');
-            }
-            foreach ($pids as $pid) {
-                if (empty($this->getProjectSetting('destination', $pid)) || !empty($this->getProjectSetting('upload-method', $pid)))
-                    continue;
-                // We might set the upload method on projects that don't need it, not a big deal
-                $old = $this->getProjectSetting('file-repo', $pid);
-                $this->setProjectSetting('upload-method', $old == '1' ? 'filerepo' : 'disk', $pid);
-            }
+        if (!empty($this->getSystemSetting('upgrade-120')))
+            return;
+        $this->setSystemSetting('upgrade-120', '1');
+        // Update vals from old version
+        $pids = $this->getProjectsWithModuleEnabled();
+        if (empty($pids))
+            return;
+        // The EM was previously used in projects prior to the upgrade
+        // Set system settings to allow for file repo and disk to match old behavior
+        $this->setSystemSetting('allow-filerepo', $this->getSystemSetting('allow-filerepo') ?? '1');
+        $this->setSystemSetting('allow-disk', $this->getSystemSetting('allow-disk') ?? '1');
+        foreach ($pids as $pid) {
+            if (empty($this->getProjectSetting('destination', $pid)))
+                continue;
+            $vals = array_map(function ($a) {
+                return $a == '1' ? 'filerepo' : 'disk';
+            }, $this->getProjectSetting('file-repo', $pid) ?? []);
+            $this->setProjectSetting('upload-method', $vals, $pid);
         }
     }
 
@@ -48,7 +52,7 @@ class AudioRecorder extends AbstractExternalModule
     public function redcap_every_page_top($project_id)
     {
         // Audio Reocorder Testing / Demo page
-        if ($_GET['prefix'] == $this->getPrefix() && $_GET['page'] == 'index') {
+        if ($this->isModulePage()) {
             $this->createJSobject([
                 'fallback' => true,
                 'noStartError' => false,
@@ -67,7 +71,7 @@ class AudioRecorder extends AbstractExternalModule
         }
 
         // Custom Config page
-        if ($this->isPage('ExternalModules/manager/project.php') && $project_id != NULL) {
+        if ($this->isPage('ExternalModules/manager/project.php') && $project_id) {
             $this->createJSobject();
             $this->includeJs('config.js');
         }
@@ -122,7 +126,7 @@ class AudioRecorder extends AbstractExternalModule
     }
 
     /*
-    Process a post request from or router
+    Process a post request from router
     */
     public function process()
     {
@@ -159,14 +163,14 @@ class AudioRecorder extends AbstractExternalModule
         // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
         $settingIndex = $this->getSettingsIndex($instrument);
         $method = $this->getProjectSetting('upload-method', $project_id)[$settingIndex];
-        $filerepo = $this->getSystemSetting('allow-filerepo') == '1' && ($method == 'filerepo' || empty($method));
-        $disk = $this->getSystemSetting('allow-disk') == '1' && ($method == 'disk' || empty($method));
+        $filerepo = ($this->getSystemSetting('allow-filerepo') == '1') && (($method == 'filerepo') || empty($method));
+        $disk = ($this->getSystemSetting('allow-disk') == '1') && (($method == 'disk') || empty($method));
         $dest = $this->getProjectSetting('destination', $project_id)[$settingIndex];
         $dest = $this->pipeTags($dest,  $project_id,  $record, $event_id, $instance);
         $dest = preg_replace('/\[timestamp\]/', Date($ts_format), $dest);
         $dest = preg_replace('/[\/*?"<>|]/', "", $dest) . $fileExtention;
 
-        if (empty($dest) || (!$filerepo && !$disk)) {
+        if (empty($dest) || (!$filerepo && !$disk) || ($filerepo && $disk)) {
             return json_encode([
                 "success" => false,
                 "note" => "No destination found. Check settings."
@@ -278,8 +282,8 @@ class AudioRecorder extends AbstractExternalModule
             "router" => $this->getUrl('router.php'),
             "helperButtons" => $this->getPipingHelperButtons(),
             "adminMaxTime" => intval($this->getSystemSetting("admin-max-time") ?? $this->defaultMaxTime),
-            "allowFileRepo" => $this->getProjectSetting('allow-filerepo') == '1',
-            "allowDisk" => $this->getProjectSetting('allow-disk') == '1',
+            "allowFileRepo" => $this->getSystemSetting('allow-filerepo') == '1',
+            "allowDisk" => $this->getSystemSetting('allow-disk') == '1',
         ], $additionalData));
         echo "<script>Object.assign({$this->getJavascriptModuleObjectName()}, {$data});</script>";
     }

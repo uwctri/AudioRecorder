@@ -1,7 +1,5 @@
 <?php
-
 require_once APP_PATH_DOCROOT . 'ProjectGeneral/header.php';
-
 ?>
 
 <style>
@@ -41,7 +39,5 @@ require_once APP_PATH_DOCROOT . 'ProjectGeneral/header.php';
 </script>
 
 <?php
-
 require_once APP_PATH_DOCROOT . "ProjectGeneral/footer.php";
-
 ?>

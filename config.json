@@ -21,6 +21,12 @@
     },
     "system-settings": [
         {
+            "key": "upgrade-120",
+            "name": "Upgrade Flag for 1.2.0",
+            "type": "textbox",
+            "hidden": true
+        },
+        {
             "key": "admin-max-time",
             "name": "<b>Max Record Time (mins)</b><br>Default: 120<br>Limits the max recording time across all projects",
             "type": "textbox"
