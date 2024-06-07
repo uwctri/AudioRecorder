@@ -52,7 +52,8 @@ class AudioRecorder extends AbstractExternalModule
     public function redcap_every_page_top($project_id)
     {
         // Audio Reocorder Testing / Demo page
-        if ($this->isModulePage()) {
+        //if ($this->isModulePage()) { // avoid using to continue support for v13 RC
+        if ($_GET['prefix'] == $this->getPrefix() && $_GET['page'] == 'index') {
             $this->createJSobject([
                 'fallback' => true,
                 'noStartError' => false,
