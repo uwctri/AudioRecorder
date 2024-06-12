@@ -16,7 +16,8 @@ class AudioRecorder extends AbstractExternalModule
 
     public function redcap_module_system_enable()
     {
-        if (!empty($this->getSystemSetting('upgrade-120')))
+        $super = $this->getUser()->isSuperUser();
+        if (!$super || !empty($this->getSystemSetting('upgrade-120')))
             return;
         $this->setSystemSetting('upgrade-120', '1');
         // Update vals from old version
