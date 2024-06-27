@@ -13,7 +13,7 @@ $(document).ready(() => {
             ExternalModules.Settings.prototype.resetConfigInstancesOld()
             if ($modal.data('module') !== module.prefix) return
             $modal.find('thead').remove()
-            $modal.find(".sub_start td").css("background-color", "#eeeeee")
+            $modal.find(".sub_start td").css("background-color", "#e6e6e6")
 
             // No uploads allowed
             if (!module.allowFileRepo && !module.allowDisk) {
