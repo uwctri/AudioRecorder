@@ -6,11 +6,15 @@ AudioRecorder allows for audio capture of the PC's microphone and audio-out, use
 
 ## Installing
 
-You can install the module from the REDCap EM repo or drop it directly in your modules folder (i.e. `redcap/modules/audio_recorder_v1.0.0`) manually. **After installing a REDCap admin must enable uploads to the filerepo or webserver disk via the module's system configuration**
+**Upgrading to 1.2.0**: We added two system-level options and attempt to set them to preserve previous module behavior. If you do not have super user access (i.e. access to all projects at full user rights) then this process will fail. Regardless its a good idea to review system level settings and inform end-users to review their settings for the EM after you have made any changes.
+
+You can install the module from the REDCap EM repo or drop it directly in your modules folder (i.e. `redcap/modules/audio_recorder_v1.0.0`) manually.
 
 ## Configuration
 
-Configuration is straight forward and requires specifying an instrument to use and css selectors refrencing buttons or "a" elements in a descriptive field for various functions of the recorder. A typical two-button configuration would involve an "Initialize" button and a "Start / Stop & Upload" button. A descriptive field for a two-button setup is below. Remove all line breaks before using. The seletors used here would be ".initRecording" and ".recordingBtn".
+After install please review system level configuration to set a maximum length for all records and enable methods for user upload of audio. A REDCap admin must enable uploads to the filerepo or webserver disk via the module's system configuration, otherwise audio recordings must be downloaded to the user's computer.
+
+Project level configuration is straight forward and requires specifying an instrument to use and css selectors refrencing buttons or "a" elements in a descriptive field for various functions of the recorder. A typical two-button configuration would involve an "Initialize" button and a "Start / Stop & Upload" button. A descriptive field for a two-button setup is below. Remove all line breaks before using. The seletors used here would be ".initRecording" and ".recordingBtn".
 
 ```html
 <div class="text-center">Begin Recording Now<br />
