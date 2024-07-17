@@ -87,6 +87,20 @@ class AudioRecorder extends AbstractExternalModule
     */
     public function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance)
     {
+        $this->loadRecorder($project_id, $record, $instrument, $event_id, $repeat_instance);
+    }
+
+    /*
+    Redcap hook to load the primary audio recording functionality 
+    on individual surveys 
+    */
+    public function redcap_survey_page($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance)
+    {
+        $this->loadRecorder($project_id, $record, $instrument, $event_id, $repeat_instance);
+    }
+
+    public function loadRecorder($project_id, $record, $instrument, $event_id, $repeat_instance)
+    {
         // If no config was found, exit
         $settingIndex = $this->getSettingsIndex($instrument);
         if ($settingIndex == -1)
