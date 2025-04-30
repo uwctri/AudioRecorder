@@ -297,8 +297,6 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
             contentType: false,
             processData: false,
             success: (data) => {
-                console.log(data);
-
                 if (data.success) {
                     Toast.fire({
                         icon: 'success',
@@ -373,7 +371,13 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         let el = document.createElement('a');
         el.download = downloadName;
         el.href = downloadUrl;
-        el.click().remove();
+        el.click()
+        el.remove();
+        log('Recording Downloaded:\n' + downloadName);
+        if (module.uploadTime)
+            $(`[name=${module.uploadTime}]`).val(formatDate(new Date(), 'y-MM-dd HH:mm'));
+        if (module.fileName)
+            $(`[name=${module.fileName}]`).val(data.file.split(/\\|\//).slice(-1)[0]);
     }
 
     const enableSaveButtons = () => {
