@@ -147,8 +147,5 @@
                 }
             ]
         }
-    ],
-    "compatibility": {
-        "redcap-version-min": "13.7.0"
-    }
+    ]
 }
