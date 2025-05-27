@@ -377,7 +377,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         if (module.uploadTime)
             $(`[name=${module.uploadTime}]`).val(formatDate(new Date(), 'y-MM-dd HH:mm'));
         if (module.fileName)
-            $(`[name=${module.fileName}]`).val(data.file.split(/\\|\//).slice(-1)[0]);
+            $(`[name=${module.fileName}]`).val(downloadName);
     }
 
     const enableSaveButtons = () => {
@@ -417,6 +417,8 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
             $(module.buttons.start).on('click', start);
             $(module.buttons.stop).on('click', stop);
             $(module.buttons.upload).on('click', upload);
+            // Only attach to buttons, <a> is done via href elsewhere
+            $(`button${module.buttons.download}`).on('click', download);
             oldUnload = window.onbeforeunload;
             window.onbeforeunload = onBeforeUnload;
         };
