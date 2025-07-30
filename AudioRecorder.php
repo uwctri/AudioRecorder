@@ -55,8 +55,7 @@ class AudioRecorder extends AbstractExternalModule
         if (!defined("USERID")) return;
 
         // Audio Reocorder Testing / Demo page
-        //if ($this->isModulePage()) { // avoid using to continue support for v13 RC
-        if ($_GET['prefix'] == $this->getPrefix() && $_GET['page'] == 'index') {
+        if ($this->isModulePage('index')) {
             $this->createJSobject([
                 'fallback' => true,
                 'noStartError' => false,
@@ -135,7 +134,11 @@ class AudioRecorder extends AbstractExternalModule
                 'stop'     => $settings['stop-recording'][$settingIndex],
                 'upload'   => $settings['upload-recording'][$settingIndex],
                 'download' => $settings['download-recording'][$settingIndex]
-            ]
+            ],
+            "record" => $record,
+            "event_id" => $event_id,
+            "instrument" => $instrument,
+            "instance" => $repeat_instance
         ];
 
         // Pass everything down to JS
@@ -179,14 +182,14 @@ class AudioRecorder extends AbstractExternalModule
 
         // Rebuild destination. Pull, Pipe, Pipe in timestamp
         // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
-        $settingIndex = $this->getSettingsIndex($instrument);
+        $settingIndex = $this->getSettingsIndex($instrument, $project_id);
         $method = $this->getProjectSetting('upload-method', $project_id)[$settingIndex];
-        $filerepo = ($this->getSystemSetting('allow-filerepo') == '1') && (($method == 'filerepo') || empty($method));
-        $disk = ($this->getSystemSetting('allow-disk') == '1') && (($method == 'disk') || empty($method));
+        $filerepo = ($this->getSystemSetting('allow-filerepo') == '1') && ($method == 'filerepo');
+        $disk = ($this->getSystemSetting('allow-disk') == '1') && ($method == 'disk');
         $dest = $this->getProjectSetting('destination', $project_id)[$settingIndex];
         $dest = $this->pipeTags($dest,  $project_id,  $record, $event_id, $instance);
         $dest = preg_replace('/\[timestamp\]/', Date($ts_format), $dest);
-        $dest = preg_replace('/[\/*?"<>|]/', "", $dest) . $fileExtention;
+        $dest = preg_replace('/[\/*?"<>|]/', "", $dest);
 
         if (empty($dest) || (!$filerepo && !$disk) || ($filerepo && $disk)) {
             return json_encode([
@@ -199,6 +202,7 @@ class AudioRecorder extends AbstractExternalModule
         $note = "";
         $success = false;
         $tmp = $_FILES['file']['tmp_name'];
+        $dest = $dest . $fileExtention;
         $dir = dirname($dest);
 
         // Upload to file repo
@@ -297,7 +301,7 @@ class AudioRecorder extends AbstractExternalModule
         $data = json_encode(array_merge([
             "csrf" => $this->getCSRFToken(),
             "prefix" => $this->getPrefix(),
-            "router" => $this->getUrl('router.php'),
+            "router" => $this->getUrl('router.php', true, true),
             "helperButtons" => $this->getPipingHelperButtons(),
             "adminMaxTime" => intval($this->getSystemSetting("admin-max-time") ?? $this->defaultMaxTime),
             "allowFileRepo" => $this->getSystemSetting('allow-filerepo') == '1',
@@ -309,14 +313,13 @@ class AudioRecorder extends AbstractExternalModule
     /*
     Search for the current instrument's config position
     */
-    private function getSettingsIndex($instrument, $project_id = NULL)
+    private function getSettingsIndex($instrument, $project_id = Null)
     {
         $allInstruments = $this->getProjectSetting('instrument', $project_id);
         $settingIndex = -1;
         foreach ($allInstruments as $index => $instrumentList) {
-            if (in_array($instrument,  $instrumentList)) {
+            if (in_array($instrument,  $instrumentList))
                 $settingIndex = $index;
-            }
         }
         return $settingIndex;
     }

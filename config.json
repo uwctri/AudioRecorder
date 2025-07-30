@@ -9,7 +9,7 @@
             "institution": "UW Madison - Center for Tobacco Research and Intervention"
         }
     ],
-    "framework-version": 15,
+    "framework-version": 16,
     "links": {
         "project": [
             {
@@ -19,6 +19,9 @@
             }
         ]
     },
+    "no-auth-pages": [
+        "router"
+    ],
     "system-settings": [
         {
             "key": "upgrade-120",

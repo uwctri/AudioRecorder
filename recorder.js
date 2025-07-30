@@ -55,7 +55,6 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
                 record: record,
                 event_id: event_id,
                 project_id: pid,
-                redcap_csrf_token: module.csrf
             },
             error: (jqXHR, textStatus, errorThrown) => console.log(`${jqXHR}\n${textStatus}\n${errorThrown}`),
             success: (data) => console.log(data)
@@ -283,10 +282,10 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         let formData = new FormData();
         formData.append('file', blob);
         formData.append('route', 'upload');
-        formData.append('record', getParameterByName("id"));
-        formData.append('event_id', event_id);
-        formData.append('instrument', getParameterByName("page"));
-        formData.append('instance', getParameterByName("instance"));
+        formData.append('record', module.record);
+        formData.append('event_id', module.event_id);
+        formData.append('instrument', module.instrument);
+        formData.append('instance', module.instance);
         formData.append('project_id', pid);
         formData.append('redcap_csrf_token', module.csrf);
         $(module.buttons.upload).prop('disabled', true);
