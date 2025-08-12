@@ -86,7 +86,7 @@ class AudioRecorder extends AbstractExternalModule
     */
     public function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance)
     {
-        $this->loadRecorder($project_id, $record, $instrument, $event_id, $repeat_instance);
+        $this->loadRecorder($project_id, $record, $instrument, $event_id, $repeat_instance, $this->getUser()->getUsername());
     }
 
     /*
@@ -98,7 +98,7 @@ class AudioRecorder extends AbstractExternalModule
         $this->loadRecorder($project_id, $record, $instrument, $event_id, $repeat_instance);
     }
 
-    public function loadRecorder($project_id, $record, $instrument, $event_id, $repeat_instance)
+    public function loadRecorder($project_id, $record, $instrument, $event_id, $repeat_instance, $user = null)
     {
         // If no config was found, exit
         $settingIndex = $this->getSettingsIndex($instrument);
@@ -106,10 +106,11 @@ class AudioRecorder extends AbstractExternalModule
             return;
 
         $settings = $this->getProjectSettings();
+        $user = $user ?? "survey_respondent";
 
         // Destination might have piping in it
         $dest = $settings['destination'][$settingIndex];
-        $dest = $this->pipeTags($dest, $project_id, $record, $event_id, $repeat_instance);
+        $dest = $this->pipeTags($dest, $project_id, $record, $event_id, $repeat_instance, $user);
 
         // Admin settings
         $adminMaxTime = intval($this->getSystemSetting("admin-max-time") ?? $this->defaultMaxTime);
@@ -138,7 +139,8 @@ class AudioRecorder extends AbstractExternalModule
             "record" => $record,
             "event_id" => $event_id,
             "instrument" => $instrument,
-            "instance" => $repeat_instance
+            "instance" => $repeat_instance,
+            "user" => $user
         ];
 
         // Pass everything down to JS
@@ -155,7 +157,7 @@ class AudioRecorder extends AbstractExternalModule
         $payload = $request->getRequestVars();
 
         if ($payload['route'] == "upload") {
-            return $this->upload($payload['project_id'], $payload['record'], $payload['event_id'], $payload['instrument'], $payload['instance']);
+            return $this->upload($payload['project_id'], $payload['record'], $payload['event_id'], $payload['instrument'], $payload['instance'], $payload['user']);
         }
 
         if ($payload['route'] == "log") {
@@ -167,7 +169,7 @@ class AudioRecorder extends AbstractExternalModule
     Uploads an audio recording to the redcap server and moves the file to
     the target destination.
     */
-    private function upload($project_id, $record, $event_id, $instrument, $instance)
+    private function upload($project_id, $record, $event_id, $instrument, $instance, $user)
     {
         $fileExtention = ".webm";
         $ts_format = "Ymd_Gis";
@@ -187,7 +189,7 @@ class AudioRecorder extends AbstractExternalModule
         $filerepo = ($this->getSystemSetting('allow-filerepo') == '1') && ($method == 'filerepo');
         $disk = ($this->getSystemSetting('allow-disk') == '1') && ($method == 'disk');
         $dest = $this->getProjectSetting('destination', $project_id)[$settingIndex];
-        $dest = $this->pipeTags($dest,  $project_id,  $record, $event_id, $instance);
+        $dest = $this->pipeTags($dest,  $project_id,  $record, $event_id, $instance, $user);
         $dest = preg_replace('/\[timestamp\]/', Date($ts_format), $dest);
         $dest = preg_replace('/[\/*?"<>|]/', "", $dest);
 
@@ -301,7 +303,7 @@ class AudioRecorder extends AbstractExternalModule
         $data = json_encode(array_merge([
             "csrf" => $this->getCSRFToken(),
             "prefix" => $this->getPrefix(),
-            "router" => $this->getUrl('router.php', true, true),
+            "router" => $this->getUrl('router.php', true, false),
             "helperButtons" => $this->getPipingHelperButtons(),
             "adminMaxTime" => intval($this->getSystemSetting("admin-max-time") ?? $this->defaultMaxTime),
             "allowFileRepo" => $this->getSystemSetting('allow-filerepo') == '1',
@@ -327,9 +329,12 @@ class AudioRecorder extends AbstractExternalModule
     /*
     Pipe in redcap standard tags
     */
-    private function pipeTags($str, $project_id, $record, $event_id, $repeat_instance)
+    private function pipeTags($str, $project_id, $record, $event_id, $repeat_instance, $user)
     {
         if (Piping::containsSpecialTags($str)) {
+            // Piping requires USERID to be defined, even if you pass $user in
+            if (!defined('USERID'))
+                define('USERID', $user);
             $str = Piping::pipeSpecialTags($str, $project_id, $record, $event_id, $repeat_instance);
         }
         return $str;

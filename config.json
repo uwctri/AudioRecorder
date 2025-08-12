@@ -22,6 +22,9 @@
     "no-auth-pages": [
         "router"
     ],
+    "no-csrf-pages": [
+        "router"
+    ],
     "system-settings": [
         {
             "key": "upgrade-120",
