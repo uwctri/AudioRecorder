@@ -13,6 +13,8 @@ use RestUtility;
 class AudioRecorder extends AbstractExternalModule
 {
     private $defaultMaxTime = 120;
+    private $fileExtension = ".webm";
+    private $timestampFormat = "Ymd_Gis";
 
     public function redcap_module_system_enable()
     {
@@ -75,7 +77,9 @@ class AudioRecorder extends AbstractExternalModule
 
         // Custom Config page
         if ($this->isPage('ExternalModules/manager/project.php') && $project_id) {
-            $this->createJSobject();
+            $metadata = REDCap::getDataDictionary($project_id, 'array');
+            $fileFields = array_keys(array_filter($metadata, fn($info) => $info['field_type'] == 'file'));
+            $this->createJSobject(['fileUploadFields' => $fileFields]);
             $this->includeJs('config.js');
         }
     }
@@ -171,9 +175,6 @@ class AudioRecorder extends AbstractExternalModule
     */
     private function upload($project_id, $record, $event_id, $instrument, $instance, $user)
     {
-        $fileExtention = ".webm";
-        $ts_format = "Ymd_Gis";
-
         // Check to be sure we got a file
         if (!isset($_FILES['file'])) {
             return json_encode([
@@ -188,12 +189,26 @@ class AudioRecorder extends AbstractExternalModule
         $method = $this->getProjectSetting('upload-method', $project_id)[$settingIndex];
         $filerepo = ($this->getSystemSetting('allow-filerepo') == '1') && ($method == 'filerepo');
         $disk = ($this->getSystemSetting('allow-disk') == '1') && ($method == 'disk');
-        $dest = $this->getProjectSetting('destination', $project_id)[$settingIndex];
+        $field = ($method == 'field');
+
+        if ($field) {
+            $field_upload = $this->getProjectSetting('destination-field', $project_id)[$settingIndex];
+            $metadata = REDCap::getDataDictionary($project_id, 'array');
+            $fileFields = array_keys(array_filter($metadata, fn($info) => $info['field_type'] == 'file'));
+            if (!in_array($field_upload, $fileFields)) {
+                return json_encode([
+                    "success" => false,
+                    "note" => "Destination field is not a file upload field"
+                ]);
+            }
+        }
+
+        $dest = $field ? "[timestamp]" : $this->getProjectSetting('destination', $project_id)[$settingIndex];
         $dest = $this->pipeTags($dest,  $project_id,  $record, $event_id, $instance, $user);
-        $dest = preg_replace('/\[timestamp\]/', Date($ts_format), $dest);
+        $dest = preg_replace('/\[timestamp\]/', Date($this->timestampFormat), $dest);
         $dest = preg_replace('/[\/*?"<>|]/', "", $dest);
 
-        if (empty($dest) || (!$filerepo && !$disk) || ($filerepo && $disk)) {
+        if (empty($dest) || (!$filerepo && !$disk && !$field) || array_sum([$filerepo, $disk, $field]) > 1) {
             return json_encode([
                 "success" => false,
                 "note" => "No destination found. Check settings."
@@ -204,12 +219,17 @@ class AudioRecorder extends AbstractExternalModule
         $note = "";
         $success = false;
         $tmp = $_FILES['file']['tmp_name'];
-        $dest = $dest . $fileExtention;
+        $dest = $dest . $this->fileExtension;
         $dir = dirname($dest);
 
         // Upload to file repo
         if ($filerepo) {
             return $this->saveToFileRepo($project_id, $record, $event_id, $dest, $tmp);
+        }
+
+        // Upload to a file upload field
+        if ($field) {
+            return $this->saveToField($project_id, $record, $event_id, $field_upload, $dest, $tmp);
         }
 
         // Log to PHP what we are doing. If there is an issue an Admin might need to recover the file
@@ -234,6 +254,44 @@ class AudioRecorder extends AbstractExternalModule
             "tmp" => $tmp,
             "note" => $note
         ]);
+    }
+
+    private function saveToField($project_id, $record, $event_id, $field, $name, $tmp)
+    {
+        $rename = dirname($tmp) . DIRECTORY_SEPARATOR . $name;
+        $result = [
+            "file" => $field,
+            "tmp" => $tmp,
+            "success" => false
+        ];
+
+        // Rename the file to default name
+        if (!move_uploaded_file($tmp, $rename)) {
+            ExternalModules::errorLog("Error moving " . $tmp . " to new destination " . $rename);
+            $result["note"] = "Failed to move temporary file to file upload field";
+            $this->projectLog($project_id, $record, $event_id, "Error Uploading Audio Recording to REDCap file upload field");
+            return json_encode($result);
+        }
+
+        // Try to enter the file into redcap's metadata
+        $doc_id = REDCap::storeFile($rename, $project_id);
+        if ($doc_id == 0) {
+            ExternalModules::errorLog("REDCap::storeFile has failed to add file $rename to the edoc metadata for PID $project_id");
+            $result["note"] = "Redcap internal method failed to move file into file upload field";
+            $this->projectLog($project_id, $record, $event_id, "Error Uploading Audio Recording to REDCap file upload field");
+            return json_encode($result);
+        }
+        $result['doc_id'] = $doc_id;
+
+        // Try to add the registered doc to a file upload field
+        if (!REDCap::addFileToField($doc_id, $project_id, $record, $field, $event_id)) {
+            ExternalModules::errorLog("REDCap::addFileToField has failed to add doc_id $doc_id to the file upload field for PID $project_id");
+            $result["note"] = "Redcap internal method failed to move file into file upload field";
+            $this->projectLog($project_id, $record, $event_id, "Error Uploading Audio Recording to REDCap file upload field");
+            return json_encode($result);
+        }
+        $result["success"] = true;
+        return json_encode($result);;
     }
 
     /*

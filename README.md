@@ -12,7 +12,7 @@ You can install the module from the REDCap EM repo or drop it directly in your m
 
 ## Configuration
 
-After install please review system level configuration to set a maximum length for all records and enable methods for user upload of audio. A REDCap admin must enable uploads to the filerepo or webserver disk via the module's system configuration, otherwise audio recordings must be downloaded to the user's computer.
+After install please review system level configuration to set a maximum length for all recordings and enable methods for user upload of audio. A REDCap admin must enable uploads to the filerepo or webserver disk via the module's system configuration, otherwise audio recordings must be downloaded to the user's computer or uploaded to a specific file upload field.
 
 Project level configuration is straight forward and requires specifying an instrument to use and css selectors refrencing buttons or "a" elements in a descriptive field for various functions of the recorder. A typical two-button configuration would involve an "Initialize" button and a "Start / Stop & Upload" button. A descriptive field for a two-button setup is below. Remove all line breaks before using. The seletors used here would be ".initRecording" and ".recordingBtn".
 

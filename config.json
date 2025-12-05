@@ -123,6 +123,14 @@
                         {
                             "value": "disk",
                             "name": "Web Server Disk Path"
+                        },
+                        {
+                            "value": "field",
+                            "name": "File Upload Field"
+                        },
+                        {
+                            "value": "none",
+                            "name": "No Upload (Local Download Only)"
                         }
                     ]
                 },
@@ -130,6 +138,11 @@
                     "key": "destination",
                     "name": "",
                     "type": "textbox"
+                },
+                {
+                    "key": "destination-field",
+                    "name": "<b>Destination Field</b>",
+                    "type": "field-list"
                 },
                 {
                     "key": "fallback",

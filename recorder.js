@@ -313,7 +313,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
                     enableSaveButtons();
                     return;
                 }
-
+                console.log(data)
                 log('Error Uploading File');
                 let footer = '';
                 let text = 'Issue uploading recording to REDCap server.';
