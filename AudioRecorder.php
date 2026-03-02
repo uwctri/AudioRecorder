@@ -129,6 +129,8 @@ class AudioRecorder extends AbstractExternalModule
             'fallback' => $settings['fallback'][$settingIndex] == '1',
             'uploadTime' => $settings['upload-time'][$settingIndex],
             'fileName' => $settings['file-name'][$settingIndex],
+            'showTimer' => $settings['show-timer'][$settingIndex] == '1',
+            'showAudioLevels' => $settings['show-audio-levels'][$settingIndex] == '1',
             'recording' => [
                 'desktop' => $settings['desktop'][$settingIndex] == '1',
                 'mic' => $settings['mic'][$settingIndex] == '1'

@@ -222,6 +222,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
                 icon: 'info',
                 title: 'Recording Audio',
                 timer: 0
+                // TODO add timer and audio levels
             });
 
             //Record atleast 1 second of audio before allowing a stop

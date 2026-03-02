@@ -145,6 +145,16 @@
                     "type": "field-list"
                 },
                 {
+                    "key": "show-timer",
+                    "name": "<b>Show Timer</b><br>Display elapsed time during recording",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "show-audio-levels",
+                    "name": "<b>Show Audio Levels</b><br>Display microphone audio levels during recording",
+                    "type": "checkbox"
+                },
+                {
                     "key": "fallback",
                     "name": "<b>Recommend local download if upload fails</b><br>The error popup will contain a download link",
                     "type": "checkbox"
