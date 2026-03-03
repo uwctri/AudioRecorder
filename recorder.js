@@ -196,13 +196,13 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         $(module.buttons.init).prop('disabled', true)
         Toast.fire({
             icon: 'success',
-            title: 'Recording Initalized!'
+            title: 'Recording Initialized'
         })
         initSuccess = true
-        log('Initalized')
+        log('Initialized')
     }
 
-    const start = () => {
+    const start = async () => {
         if (isRecording || !(module.recording.desktop || module.recording.mic))
             return
 
@@ -210,8 +210,8 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
             if (showInitError) { // Show only every other click, we might be using a toggle
                 Swal.fire({
                     icon: 'error',
-                    title: 'Recorder not Initalized',
-                    text: 'Please initalize before attempting to record.',
+                    title: 'Recorder not Initialized',
+                    text: 'Please initialize before attempting to record.',
                 })
             }
             showInitError = !showInitError
@@ -225,6 +225,9 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         $(module.buttons.stop).prop('disabled', false)
 
         try {
+            if (audioContext.state === 'suspended')
+                await audioContext.resume()
+
             rec.start()
             disableSaveButtons('recording audio')
             let html = ''
@@ -233,7 +236,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
             let showTimer = () => { }
 
             if (module.showAudioLevels) {
-                html += '<i class="fas fa-microphone" aria-hidden="true" style="margin-right: 8px"></i><progress id="audio-level" value="0" max="100" style="flex: 1"></progress>'
+                html += '<i class="fas fa-microphone" aria-hidden="true" style="margin-right: 8px"></i><progress id="audio-level" value="0" max="100" style="display: block; width: 180px; min-width: 120px; flex: 1 1 180px"></progress>'
                 showAudioLevels = () => {
                     const progressBar = Swal.getHtmlContainer().querySelector('#audio-level')
                     const updateLevel = () => {
@@ -296,7 +299,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
                 return
             Swal.fire({
                 icon: 'error',
-                title: 'Nothing to record!',
+                title: 'Nothing to record',
                 text: 'No live feeds are available for audio recording. This may be a browser or OS issue.',
             })
         }
@@ -362,7 +365,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
                 if (data.success) {
                     Toast.fire({
                         icon: 'success',
-                        title: 'Recording Successfully Uploaded!'
+                        title: 'Recording Uploaded'
                     })
 
                     log('Recording Uploaded:\n' + downloadName)
