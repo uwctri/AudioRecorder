@@ -23,6 +23,8 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
     let disableCalls = 0;
 
     // Streaming globals
+    const audioContext = new AudioContext();
+    let audioDataArray;
     let stream;
     let rec;
     let blob;
@@ -64,23 +66,22 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
     }
 
     const mergeAudioStreams = (desktopStream, voiceStream) => {
-        const context = new AudioContext();
-        const destination = context.createMediaStreamDestination();
+        const destination = audioContext.createMediaStreamDestination();
         let hasDesktop = false;
         let hasVoice = false;
 
         if (desktopStream && desktopStream.getAudioTracks().length > 0) {
             // If you don't want to share Audio from the desktop it should still work with just the voice.
-            const source1 = context.createMediaStreamSource(desktopStream);
-            const desktopGain = context.createGain();
+            const source1 = audioContext.createMediaStreamSource(desktopStream);
+            const desktopGain = audioContext.createGain();
             desktopGain.gain.value = 0.7;
             source1.connect(desktopGain).connect(destination);
             hasDesktop = true;
         }
 
         if (voiceStream && voiceStream.getAudioTracks().length > 0) {
-            const source2 = context.createMediaStreamSource(voiceStream);
-            const voiceGain = context.createGain();
+            const source2 = audioContext.createMediaStreamSource(voiceStream);
+            const voiceGain = audioContext.createGain();
             voiceGain.gain.value = 0.7;
             source2.connect(voiceGain).connect(destination);
             hasVoice = true;
@@ -164,6 +165,13 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         stream = new MediaStream(tracks);
         blobs = [];
 
+        // Setup analyser for audio levels if enabled
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 1024;
+        source.connect(analyser);
+        audioDataArray = new Uint8Array(analyser.frequencyBinCount);
+
         rec = new MediaRecorder(stream, {
             mimeType: "audio/" + extention + ";codecs=" + codecs
         });
@@ -218,11 +226,54 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         try {
             rec.start();
             disableSaveButtons('recording audio');
+            let html = '';
+            let showAudioLevels = () => { };
+            let showTimer = () => { };
+            let timerInterval;
+            if (module.showAudioLevels) {
+                html += '<progress id="audio-level" value="0" max="100" style="width: 100%"></progress>';
+                showAudioLevels = () => {
+                    const progressBar = Swal.getHtmlContainer().querySelector('#audio-level');
+                    const updateLevel = () => {
+                        analyser.getByteFrequencyData(audioDataArray);
+                        let sum = 0;
+                        for (let i = 0; i < audioDataArray.length; i++)
+                            sum += audioDataArray[i];
+                        let average = sum / audioDataArray.length;
+                        let level = Math.min(100, Math.floor(average * 2));
+                        if (progressBar) progressBar.value = level;
+                        requestAnimationFrame(updateLevel);
+                    };
+                    updateLevel();
+                };
+            }
+            if (module.showTimer) {
+                html += '<div id="timer" style="margin-top: 10px; font-size: 1.2em;">0:00</div>';
+                let startTime = Date.now();
+                showTimer = () => {
+                    let timer = Swal.getHtmlContainer().querySelector('#timer');
+                    timerInterval = setInterval(() => {
+                        let elapsed = Date.now() - startTime;
+                        let minutes = Math.floor(elapsed / 60000);
+                        let seconds = Math.floor((elapsed % 60000) / 1000);
+                        if (timer) timer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    }, 100);
+                };
+            }
+
             recordingToast = Toast.fire({
                 icon: 'info',
                 title: 'Recording Audio',
-                timer: 0
-                // TODO add timer and audio levels
+                timer: 0,
+                html: html,
+                didOpen: () => {
+                    showAudioLevels()
+                    showTimer()
+                },
+                willClose: () => {
+                    if (module.showTimer)
+                        clearInterval(timerInterval);
+                }
             });
 
             //Record atleast 1 second of audio before allowing a stop

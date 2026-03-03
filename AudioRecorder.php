@@ -61,6 +61,8 @@ class AudioRecorder extends AbstractExternalModule
             $this->createJSobject([
                 'fallback' => true,
                 'noStartError' => false,
+                'showTimer' => true,
+                'showAudioLevels' => true,
                 'recording' => [
                     'desktop' => true,
                     'mic' => true
