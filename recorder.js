@@ -24,6 +24,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
 
     // Streaming globals
     const audioContext = new AudioContext();
+    let analyser;
     let audioDataArray;
     let stream;
     let rec;
@@ -167,7 +168,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
 
         // Setup analyser for audio levels if enabled
         const source = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
+        analyser = audioContext.createAnalyser();
         analyser.fftSize = 1024;
         source.connect(analyser);
         audioDataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -227,11 +228,12 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
             rec.start();
             disableSaveButtons('recording audio');
             let html = '';
+            let timerInterval;
             let showAudioLevels = () => { };
             let showTimer = () => { };
-            let timerInterval;
+
             if (module.showAudioLevels) {
-                html += '<progress id="audio-level" value="0" max="100" style="width: 100%"></progress>';
+                html += '<i class="fas fa-microphone" aria-hidden="true" style="margin-right: 8px;"></i><progress id="audio-level" value="0" max="100" style="flex: 1;"></progress>';
                 showAudioLevels = () => {
                     const progressBar = Swal.getHtmlContainer().querySelector('#audio-level');
                     const updateLevel = () => {
@@ -247,8 +249,11 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
                     updateLevel();
                 };
             }
+
             if (module.showTimer) {
-                html += '<div id="timer" style="margin-top: 10px; font-size: 1.2em;">0:00</div>';
+                if (!module.showAudioLevels)
+                    html += '<div>Time Elapsed:</div>';
+                html += '<div id="timer" style="margin-left: 10px; white-space: nowrap;">0:00</div>';
                 let startTime = Date.now();
                 showTimer = () => {
                     let timer = Swal.getHtmlContainer().querySelector('#timer');
@@ -260,6 +265,9 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
                     }, 100);
                 };
             }
+
+            if (html != '')
+                html = `<div class="p-0" style="display: flex; align-items: center;">${html}</div>`;
 
             recordingToast = Toast.fire({
                 icon: 'info',
