@@ -228,7 +228,11 @@ class AudioRecorder extends AbstractExternalModule
         if (isset($_FILES['file']['name'])) {
             $pathInfo = pathinfo($_FILES['file']['name']);
             if (!empty($pathInfo['extension'])) {
-                $clientExtension = "." . $pathInfo['extension'];
+                $ext = strtolower($pathInfo['extension']);
+                $allowedExtensions = ['webm', 'mp4', 'ogg', 'wav', 'aac', 'm4a', 'mp3', 'mpeg'];
+                if (in_array($ext, $allowedExtensions)) {
+                    $clientExtension = "." . $ext;
+                }
             }
         }
         $fileExtension = $clientExtension ?? $this->fileExtension;

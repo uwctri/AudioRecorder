@@ -17,7 +17,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
     let isChrome = false
     try {
         const chromeMatch = navigator.userAgent.match(/Chrome\/(\d+)/)
-        isChrome = chromeMatch && /Google Inc/.test(navigator.vendor) && parseInt(chromeMatch[1], 10) >= 74
+        isChrome = chromeMatch && /Google Inc/.test(navigator.vendor || '') && parseInt(chromeMatch[1], 10) >= 74
     } catch (e) {
         console.error("Error parsing user agent for Chrome:", e)
     }
@@ -233,11 +233,24 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         })
         rec.ondataavailable = (e) => blobs.push(e.data)
         rec.onstop = async () => {
+            const actualMimeType = rec.mimeType || recorderMimeType
             blob = new Blob(blobs, {
-                type: recorderMimeType
+                type: actualMimeType
             })
+            let actualExtension = extension
+            if (actualMimeType) {
+                if (actualMimeType.includes('webm')) {
+                    actualExtension = 'webm'
+                } else if (actualMimeType.includes('mp4') || actualMimeType.includes('aac') || actualMimeType.includes('m4a')) {
+                    actualExtension = 'mp4'
+                } else if (actualMimeType.includes('ogg')) {
+                    actualExtension = 'ogg'
+                } else if (actualMimeType.includes('wav')) {
+                    actualExtension = 'wav'
+                }
+            }
             downloadUrl = window.URL.createObjectURL(blob)
-            file = pipe(module.destination) + '.' + extension
+            file = pipe(module.destination) + '.' + actualExtension
             downloadName = file.includes(':\\') ? file.split('\\').pop() : file.split('/').pop()
             if (module.buttons.download) {
                 $(module.buttons.download).prop('href', downloadUrl).prop('download', downloadName).prop('disabled', false)
