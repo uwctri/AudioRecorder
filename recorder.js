@@ -3,18 +3,49 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
 (() => {
     // Constants
     const module = ExternalModules.UWMadison.AudioRecorder
-    const extention = 'webm'
-    const codecs = 'opus'
+    let extension = 'webm'
+    let recorderMimeType = 'audio/webm;codecs=opus'
     const timeOut = 5000
     const defaultFileName = "[timestamp]"
 
-    // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
+    // Remove illegal characters from file path, allow : due to windows needing it for drive letter
     // We will only use this for a file name if we download the file locally
     module.destination ??= defaultFileName
     module.destination = module.destination.replace(/[\/*?"<>|]/g, '')
 
     // State globals
-    let isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor) && (navigator.userAgent.split('Chrome/')[1].split('.')[0] >= 74)
+    let isChrome = false
+    try {
+        const chromeMatch = navigator.userAgent.match(/Chrome\/(\d+)/)
+        isChrome = chromeMatch && /Google Inc/.test(navigator.vendor) && parseInt(chromeMatch[1], 10) >= 74
+    } catch (e) {
+        console.error("Error parsing user agent for Chrome:", e)
+    }
+
+    const getSupportedAudioFormat = () => {
+        const formats = [
+            { mimeType: 'audio/webm;codecs=opus', extension: 'webm' },
+            { mimeType: 'audio/webm', extension: 'webm' },
+            { mimeType: 'audio/ogg;codecs=opus', extension: 'ogg' },
+            { mimeType: 'audio/ogg', extension: 'ogg' },
+            { mimeType: 'audio/mp4;codecs=mp4a.40.2', extension: 'mp4' },
+            { mimeType: 'audio/mp4', extension: 'mp4' },
+            { mimeType: 'audio/aac', extension: 'aac' },
+            { mimeType: 'audio/wav', extension: 'wav' }
+        ]
+
+        if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) {
+            return null
+        }
+
+        for (const format of formats) {
+            if (MediaRecorder.isTypeSupported(format.mimeType)) {
+                return format
+            }
+        }
+        return null
+    }
+
     let initFailure = false
     let initSuccess = false
     let isRecording = false
@@ -116,11 +147,35 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
     }
 
     const init = async () => {
-        if (!isChrome) {
+        initFailure = false
+
+        if (module.recording.desktop && !isChrome) {
             Swal.fire({
                 icon: 'error',
                 title: 'Unsupported Browser',
-                text: 'Currently only Google Chrome is supported for audio recording.',
+                text: 'Currently only Google Chrome is supported for desktop/display audio recording.',
+            })
+            return
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Unsupported Browser',
+                text: 'Your browser does not support audio recording. Please use a modern browser.',
+            })
+            return
+        }
+
+        const format = getSupportedAudioFormat()
+        if (format) {
+            recorderMimeType = format.mimeType
+            extension = format.extension
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Unsupported Browser',
+                text: 'No supported audio recording format was found on your browser.',
             })
             return
         }
@@ -174,15 +229,15 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         audioDataArray = new Uint8Array(analyser.frequencyBinCount)
 
         rec = new MediaRecorder(stream, {
-            mimeType: "audio/" + extention + ";codecs=" + codecs
+            mimeType: recorderMimeType
         })
         rec.ondataavailable = (e) => blobs.push(e.data)
         rec.onstop = async () => {
             blob = new Blob(blobs, {
-                type: "audio/" + extention
+                type: recorderMimeType
             })
             downloadUrl = window.URL.createObjectURL(blob)
-            file = pipe(module.destination) + '.' + extention
+            file = pipe(module.destination) + '.' + extension
             downloadName = file.includes(':\\') ? file.split('\\').pop() : file.split('/').pop()
             if (module.buttons.download) {
                 $(module.buttons.download).prop('href', downloadUrl).prop('download', downloadName).prop('disabled', false)
@@ -345,7 +400,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
         disableSaveButtons('uploading audio')
         isSaved = true
         let formData = new FormData()
-        formData.append('file', blob)
+        formData.append('file', blob, downloadName)
         formData.append('route', 'upload')
         formData.append('record', module.record)
         formData.append('event_id', module.event_id)

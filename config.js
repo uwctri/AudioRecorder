@@ -37,7 +37,7 @@ $(document).ready(() => {
                     $(this).find('input').addClass("mt-1")
                     $(this).find('td').first().attr('colspan', '2').prepend(
                         `<b>Destination File Path or Name:</b><br>`
-                    ).append(`<br><span>Full disk path on the REDCap server to save the recording to if uploading to disk. If downloading or saving to the file repo then specify a filename only. Do not include a file extention, all files are saved as webm.
+                    ).append(`<br><span>Full disk path on the REDCap server to save the recording to if uploading to disk. If downloading or saving to the file repo then specify a filename only. Do not include a file extention, files are saved in the format supported by the recording browser (e.g. webm or mp4).
                     </span>${module.helperButtons}<br><span>You may also pipe a [timestamp] into the destination</span>`)
                 }
             })

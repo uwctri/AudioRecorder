@@ -13,7 +13,7 @@ use RestUtility;
 class AudioRecorder extends AbstractExternalModule
 {
     private $defaultMaxTime = 120;
-    private $fileExtension = ".webm";
+    private $fileExtension = ".webm"; // Default 
     private $timestampFormat = "Ymd_Gis";
 
     public function redcap_module_system_enable()
@@ -223,7 +223,16 @@ class AudioRecorder extends AbstractExternalModule
         $note = "";
         $success = false;
         $tmp = $_FILES['file']['tmp_name'];
-        $dest = $dest . $this->fileExtension;
+
+        $clientExtension = null;
+        if (isset($_FILES['file']['name'])) {
+            $pathInfo = pathinfo($_FILES['file']['name']);
+            if (!empty($pathInfo['extension'])) {
+                $clientExtension = "." . $pathInfo['extension'];
+            }
+        }
+        $fileExtension = $clientExtension ?? $this->fileExtension;
+        $dest = $dest . $fileExtension;
         $dir = dirname($dest);
 
         // Upload to file repo
