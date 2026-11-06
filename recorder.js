@@ -407,7 +407,11 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
             return
         }
 
-        if (!module.allowDisk && !module.allowFileRepo)
+        const method = module.uploadMethod
+        const canUpload = method
+            ? ((method === 'field') || (method === 'filerepo' && module.allowFileRepo) || (method === 'disk' && module.allowDisk))
+            : (module.allowDisk || module.allowFileRepo)
+        if (!canUpload)
             return
 
         disableSaveButtons('uploading audio')
@@ -430,7 +434,12 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
             contentType: false,
             processData: false,
             success: (data) => {
-                if (data.success) {
+                if (typeof data === 'string') {
+                    try {
+                        data = JSON.parse(data)
+                    } catch (e) {}
+                }
+                if (data && data.success) {
                     Toast.fire({
                         icon: 'success',
                         title: 'Recording Uploaded'
@@ -447,7 +456,7 @@ const AudioRecorder = { init: null, start: null, stop: null, upload: null, downl
                 console.log(data)
                 log('Error Uploading File')
                 let footer = ''
-                let text = 'Issue uploading recording to REDCap server.'
+                let text = (data && data.note) ? data.note : 'Issue uploading recording to REDCap server.'
 
                 if (module.fallback) {
                     footer = `<a href="${downloadUrl}" download="${downloadName}"><b>Download Recording</b></a>`

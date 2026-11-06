@@ -131,6 +131,7 @@ class AudioRecorder extends AbstractExternalModule
             'fallback' => $settings['fallback'][$settingIndex] == '1',
             'uploadTime' => $settings['upload-time'][$settingIndex],
             'fileName' => $settings['file-name'][$settingIndex],
+            'uploadMethod' => $settings['upload-method'][$settingIndex] ?? 'none',
             'showTimer' => $settings['show-timer'][$settingIndex] == '1',
             'showAudioLevels' => $settings['show-audio-levels'][$settingIndex] == '1',
             'recording' => [
@@ -180,23 +181,49 @@ class AudioRecorder extends AbstractExternalModule
     private function upload($project_id, $record, $event_id, $instrument, $instance, $user)
     {
         // Check to be sure we got a file
-        if (!isset($_FILES['file'])) {
+        if (!isset($_FILES['file']) || !is_array($_FILES['file']) || ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            $errorCode = $_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE;
+            $uploadErrors = [
+                UPLOAD_ERR_INI_SIZE => "File size exceeds server upload limit",
+                UPLOAD_ERR_FORM_SIZE => "File size exceeds form upload limit",
+                UPLOAD_ERR_PARTIAL => "File upload was only partially completed",
+                UPLOAD_ERR_NO_FILE => "No file received",
+                UPLOAD_ERR_NO_TMP_DIR => "Missing temporary upload folder on server",
+                UPLOAD_ERR_CANT_WRITE => "Failed to write uploaded file to disk",
+                UPLOAD_ERR_EXTENSION => "A PHP extension stopped the file upload"
+            ];
+            $note = $uploadErrors[$errorCode] ?? ("Upload failed with error code " . $errorCode);
             return json_encode([
                 "success" => false,
-                "note" => "No file receivied"
+                "note" => $note
+            ]);
+        }
+
+        $tmp = $_FILES['file']['tmp_name'];
+        if (empty($tmp) || !is_uploaded_file($tmp) || filesize($tmp) === 0) {
+            return json_encode([
+                "success" => false,
+                "note" => "Uploaded file is empty or invalid"
             ]);
         }
 
         // Rebuild destination. Pull, Pipe, Pipe in timestamp
         // Remove illegal charachters from file path, allow : due to windows needing it for drive letter
         $settingIndex = $this->getSettingsIndex($instrument, $project_id);
-        $method = $this->getProjectSetting('upload-method', $project_id)[$settingIndex];
+        if ($settingIndex < 0) {
+            return json_encode([
+                "success" => false,
+                "note" => "No audio recorder configuration found for instrument '{$instrument}'."
+            ]);
+        }
+
+        $method = $this->getProjectSetting('upload-method', $project_id)[$settingIndex] ?? null;
         $filerepo = ($this->getSystemSetting('allow-filerepo') == '1') && ($method == 'filerepo');
         $disk = ($this->getSystemSetting('allow-disk') == '1') && ($method == 'disk');
         $field = ($method == 'field');
 
         if ($field) {
-            $field_upload = $this->getProjectSetting('destination-field', $project_id)[$settingIndex];
+            $field_upload = $this->getProjectSetting('destination-field', $project_id)[$settingIndex] ?? null;
             $metadata = REDCap::getDataDictionary($project_id, 'array');
             $fileFields = array_keys(array_filter($metadata, fn($info) => $info['field_type'] == 'file'));
             if (!in_array($field_upload, $fileFields)) {
@@ -207,7 +234,7 @@ class AudioRecorder extends AbstractExternalModule
             }
         }
 
-        $dest = $field ? "[timestamp]" : $this->getProjectSetting('destination', $project_id)[$settingIndex];
+        $dest = $field ? "[timestamp]" : ($this->getProjectSetting('destination', $project_id)[$settingIndex] ?? '');
         $dest = $this->pipeTags($dest,  $project_id,  $record, $event_id, $instance, $user);
         $dest = preg_replace('/\[timestamp\]/', Date($this->timestampFormat), $dest);
         $dest = preg_replace('/[\/*?"<>|]/', "", $dest);
@@ -222,7 +249,6 @@ class AudioRecorder extends AbstractExternalModule
         // Prep
         $note = "";
         $success = false;
-        $tmp = $_FILES['file']['tmp_name'];
 
         $clientExtension = null;
         if (isset($_FILES['file']['name'])) {
@@ -261,7 +287,7 @@ class AudioRecorder extends AbstractExternalModule
         } else {
             $extaMsg = $dirExists ? "" : " Failed to create directory";
             ExternalModules::errorLog("Error moving " . $tmp . " to new destination " . $dest . $extaMsg);
-            $result["note"] = "Failed to move temporary file to destination";
+            $note = "Failed to move temporary file to destination" . $extaMsg;
             $this->projectLog($project_id, $record, $event_id, "Error Uploading Audio Recording." . $extaMsg);
         }
 
@@ -308,7 +334,7 @@ class AudioRecorder extends AbstractExternalModule
             return json_encode($result);
         }
         $result["success"] = true;
-        return json_encode($result);;
+        return json_encode($result);
     }
 
     /*
@@ -393,9 +419,10 @@ class AudioRecorder extends AbstractExternalModule
     private function getSettingsIndex($instrument, $project_id = Null)
     {
         $allInstruments = $this->getProjectSetting('instrument', $project_id);
+        if (!is_array($allInstruments)) return -1;
         $settingIndex = -1;
         foreach ($allInstruments as $index => $instrumentList) {
-            if (in_array($instrument,  $instrumentList))
+            if (is_array($instrumentList) && in_array($instrument, $instrumentList))
                 $settingIndex = $index;
         }
         return $settingIndex;
