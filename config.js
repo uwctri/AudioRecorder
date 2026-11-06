@@ -65,22 +65,36 @@ $(document).ready(() => {
                     $modal.find(`[name="destination___${instanceId}"]`).closest('tr').toggle(visibility['destination'])
                     $modal.find(`[name="file-name___${instanceId}"]`).closest('tr').toggle(visibility['file-name'])
                     $modal.find(`[name="upload-time___${instanceId}"]`).closest('tr').toggle(visibility['upload-time'])
+
+                    if (visibility['destination-field']) {
+                        $modal.find(`[name="destination-field___${instanceId}"]`).closest('tr').find('.select2-container').css('width', '100%')
+                    }
                 }
             }
             toggleDestinationField()
             $modal.find('input[name^="upload-method___"]').on('change', toggleDestinationField)
 
             // Filter the destination field dropdown to only show file upload fields, run every second in case the user adds instances
-            setInterval(() => {
+            const filterDestinationFields = () => {
                 for (const select of $modal.find('select[name^="destination-field___"]')) {
-                    const currentValue = $(select).val()
-                    $(select).empty()
-                    $(select).append('<option value=""></option>')
-                    for (const field of module.fileUploadFields)
-                        $(select).append(`<option value="${field}">${field}</option>`)
-                    $(select).val(currentValue)
+                    const $select = $(select)
+                    if (!$select.data('file-fields-filtered')) {
+                        const currentValue = $select.val()
+                        $select.empty()
+                        $select.append('<option value=""></option>')
+                        for (const field of module.fileUploadFields)
+                            $select.append(`<option value="${field}">${field}</option>`)
+                        $select.val(currentValue)
+                        $select.trigger('change.select2')
+                        $select.data('file-fields-filtered', true)
+                    }
+                    if ($select.closest('tr').is(':visible')) {
+                        $select.closest('tr').find('.select2-container').css('width', '100%')
+                    }
                 }
-            }, 1000)
+            }
+            filterDestinationFields()
+            setInterval(filterDestinationFields, 1000)
         }
     })
 
